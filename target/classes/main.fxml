@@ -109,9 +109,9 @@
                 </VirtualizedScrollPane>
                 <TableView fx:id="intermediateCodeTable" layoutX="20.0" layoutY="100.0" prefHeight="100.0" prefWidth="300.0">
                 <columns>
-                    <TableColumn fx:id="column1" prefWidth="100.0" text="Coluna 1" />
-                    <TableColumn fx:id="column2" prefWidth="100.0" text="Coluna 2" />
-                    <TableColumn fx:id="column3" prefWidth="100.0" text="Coluna 3" />
+                    <TableColumn fx:id="column1" prefWidth="100.0" text="Sequência" />
+                    <TableColumn fx:id="column2" prefWidth="100.0" text="Código" />
+                    <TableColumn fx:id="column3" prefWidth="100.0" text="Parâmetro" />
                 </columns>
             </TableView>
             </HBox>
