@@ -1,0 +1,459 @@
+options {
+    IGNORE_CASE = true;
+    JAVA_UNICODE_ESCAPE = true;
+    STATIC = false;
+    DEBUG_PARSER = true;
+    LOOKAHEAD = 1;
+    DEBUG_LOOKAHEAD = true;
+}
+
+PARSER_BEGIN(LanguageParser)
+package classes;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import util.OutputData;
+
+public class LanguageParser {
+    private int contParseError = 0;
+    private boolean debugRecovery = true;
+    private final static List<ErrorStruct> output = new ArrayList<ErrorStruct>();
+    private boolean eof;
+
+    public static List<Token> getTokens(String stream) {
+        InputStream target = new ByteArrayInputStream(stream.getBytes());
+        LanguageParser parser = new LanguageParser(target);
+        return tokenize(parser);
+    }
+
+    public static ArrayList<ErrorStruct> analisadorSintatico(String stream) {
+        InputStream target = new ByteArrayInputStream(stream.getBytes());
+        LanguageParser parser = new LanguageParser(target);
+        try {
+            parser.programa();
+        } catch (ParseException e) {
+            output.add(new ErrorStruct("Error parsing the program.\n", e));
+        }
+        ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
+        output.clear();
+        return tmp;
+    }
+
+    public static LanguageParser create(String stream) {
+        InputStream target = new ByteArrayInputStream(stream.getBytes());
+        return new LanguageParser(target);
+    }
+
+    public static void main(String[] args) throws TokenMgrError, ParseException {
+        LanguageParser parser;
+        if (args.length == 0) {
+            parser = new LanguageParser(System.in);
+        } else if (args.length == 1) {
+            try {
+                parser = new LanguageParser(new java.io.FileInputStream(args[0]));
+            } catch (java.io.FileNotFoundException e) {
+                System.out.println("LanguageParser: file " + args[0] + " was not found.");
+                return;
+            }
+        }
+    }
+
+    public static List<Token> tokenize(LanguageParser parser) {
+        List<Token> tokens = new ArrayList<Token>();
+        Token token = parser.getNextToken();
+
+        while (token.kind != LanguageParserConstants.EOF) {
+            tokens.add(token);
+            token = parser.getNextToken();
+        }
+
+        if (!TokenHandler.isClosed()) {
+            tokens.add(TokenHandler.createToken());
+        }
+        return tokens;
+    }
+
+    static public String im(int x) {
+        String s = tokenImage[x];
+        int k = s.lastIndexOf("\"");
+        try {
+            s = s.substring(1, k);
+        } catch (StringIndexOutOfBoundsException e) {
+            // Handle exception or log if necessary
+        }
+        return s;
+    }
+
+    public void consumeUntil(RecoverySet g, ParseException e, String met) throws ParseException {
+        Token tok;
+        if (g == null) {
+            throw e;
+        }
+        tok = getToken(1);
+        while (!eof) {
+            if (g.contains(tok.kind)) {
+                break;
+            }
+            getNextToken();
+            tok = getToken(1);
+            if (tok.kind == EOF && !g.contains(EOF)) {
+                eof = true;
+            }
+        }
+        contParseError++;
+    }
+}
+
+PARSER_END(LanguageParser)
+//TOKENS
+//CARACTERES ESPECIAIS IGNORADOS
+SKIP : {
+    " " | "\t" | "\n" | "\r" | "\f" | "\r\n"  |  "\n\r"
+}
+// DECLARAÇÕES DE GERENCIAMENTO DE TOKEN
+TOKEN_MGR_DECLS: {
+    public static int numcomments = 0;
+}
+//COMENTARIO DE LINHA Tudo será ignorado após o // e quando chegar no /n o que estiver escrito não será mais ignorado
+SKIP:
+{
+    "//": COMENTARIO_LINHA
+}
+<COMENTARIO_LINHA> SKIP:
+{
+        <["\n" , "\r"]> : DEFAULT
+    |   <~[]>
+}
+
+SKIP : {
+    "/*" {OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Comentario de bloco nao finalizado", jjmatchedKind);}: COMENTARIO_BLOCO
+}
+<COMENTARIO_BLOCO> SKIP : {
+    "*/" {OutputData.removeLastOutputInvalid();}: DEFAULT |
+    <~[]>
+}
+//PALAVRA RESERVADA
+TOKEN [IGNORE_CASE]:
+{
+    <DO: "do"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <MAKE: "make"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <END: "end"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <CONST:"const"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <VAR:"var"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <INT:"int"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <REAL: "real"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <CHAR: "char"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <BOOL: "bool"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <GET: "get"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <PUT: "put"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <IF: "if"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <THEN: "then"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <ELSE: "else"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <TRUE: "true"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <FALSE: "false"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+    | <WHILE: "while"> { OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Palavra Reservada", jjmatchedKind); }
+}
+
+//Simbolo Especial
+TOKEN :
+{
+    <ABRE_PARENTESES:"(">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<FECHA_PARENTESES: ")">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<PONTO: ".">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<VIRGULA: ",">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<DOISPONTOS: ":">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<ATRIBUICAO:"->">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+    |<PONTOVIRGULA: ";">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Simbolo Especial", jjmatchedKind); }
+}
+
+//Simbolo Especial Operadores Aritiméticos
+TOKEN :
+{
+    <ADICAO:"+">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<SUBTRACAO:"-">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<MULTIPLICACAO:"*">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<DIVISAO:"/">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<POTENCIA:"**">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<DIVISAO_INTEIRA:"%">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+    |<RESTO:"%%">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Aritmético", jjmatchedKind); }
+}
+
+//Simbolo Especial Operadores Relacionais
+TOKEN :
+{
+    <IGUAL:"=">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+    |<DIFERENTE:"<>">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+    |<MENOR:"<">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+    |<MAIOR:">">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+    |<MENOR_IGUAL:"<=">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+    |<MAIOR_IGUAL:">=">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Relacional", jjmatchedKind); }
+}
+
+//Simbolo Especial Operadores Lógicos
+TOKEN :
+{
+    <E:"&">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Lógico", jjmatchedKind); }
+    |<OU:"|">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Lógico", jjmatchedKind); }
+    |<NAO:"!">{ OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Operador Lógico", jjmatchedKind); }
+}
+
+//CONSTANTES NUMÉRICAS
+TOKEN :
+{
+     <#DIGITO: ["0"-"9"]>
+    |<CONSTANTE_INTEIRA: <DIGITO> (<DIGITO>)? (<DIGITO>)? > {OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Inteira", jjmatchedKind); }
+    |<CONSTANTE_REAL:(<DIGITO> (<DIGITO>)? (<DIGITO>)? (<DIGITO>)? <PONTO> <DIGITO> (<DIGITO>)?)>{OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Real", jjmatchedKind); }
+}
+
+//CONSTANTE LITERAIS 'PALAVRAS' OU "FRASES"
+TOKEN :
+{
+    <CONSTANTE_LITERAL: "\"" (~["\n","\r","\"","\'"])*"\"" | "'"(~["\n","\r","\"","\'"])*"'">{OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Literal", jjmatchedKind);                                            }
+}
+
+//IDENTIFICADORES EXEMPLOS VÁLIDOS:
+TOKEN :
+{
+      <#LETRA: ["A"-"Z","a"-"z"]>
+    | <IDENTIFICADOR: (<LETRA> |"_")+((<DIGITO>(<LETRA>|"_")+)*)>{OutputData.addOutputValid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Identificador válido", jjmatchedKind);}
+}
+
+//ERROS O ~FAZ A NEGAÇÃO DOS SIMBOLOS VÁLIDOS, ENTÃO QUALQUER SIMBOLO DIFERENTE DESSES SERÃO INVÁLIDADOS
+TOKEN :
+{
+     <SIMBOLO_INVALIDO:
+         (~["a"-"z","A"-"Z","0"-"9",
+         "\n","\r","\t","\f"," ",
+         "(", ")", ";", ".", ",", ":", "+", "-", "*", "/", "*", "%", "=", "<", ">", "&", "|", "!" ])+>
+         {OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Caractere Inválido", jjmatchedKind);}
+    | <CONSTANTE_INTEIRA_INVALIDA: <DIGITO> (<DIGITO>)? (<DIGITO>)? (<DIGITO>)+>{OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Interia invalida", jjmatchedKind);}
+    | <CONSTANTE_REAL_INVALIDA:
+        <DIGITO> (<DIGITO>)? (<DIGITO>)? (<DIGITO>)? (<DIGITO>)+ <PONTO> <DIGITO> (<DIGITO>)? |
+        <DIGITO> (<DIGITO>)? (<DIGITO>)? (<DIGITO>)? <PONTO> <DIGITO> (<DIGITO>)? (<DIGITO>)+ |
+        <DIGITO> (<DIGITO>)? (<DIGITO>)? (<DIGITO>)? <PONTO> <PONTO> |
+        <PONTO> (<DIGITO>)+> {OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Real invalida", jjmatchedKind);}
+    | <CONSTANTE_LITERAL_INVALIDA: "\""(~["\n","\r","\"","\'"])*~["\""] | "'"(~["\n","\r","\"","\'"])*~["\'"]>{OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Constante Literal invalida", jjmatchedKind);}
+    | <IDENTIFICADOR_INVALIDO:
+       (<LETRA> | "_") ((<LETRA> | "_")* (<DIGITO> <LETRA> | <LETRA> <DIGITO>)?)*
+       | (<LETRA> | "_") (<LETRA> | "_" | <DIGITO>)* <DIGITO>> {OutputData.addOutputInvalid(image.toString(), input_stream.getEndLine(), input_stream.getBeginColumn(), "Identificador inválido", jjmatchedKind);}
+
+}
+
+//Analisador Sintatico
+// Produções
+void programa() :
+{}
+{
+    <MAKE> identificador() declaracao_constantes_variaveis() lista_comandos() <END> <PONTO>
+}
+
+// <declaracao de constantes ou variaveis> ::= <declaracao de constante> | <declaracao de variavel> | £
+void declaracao_constantes_variaveis() :
+{}
+{
+    (declaracao_constante() | declaracao_variavel())
+}
+
+// <declaracao de constante> ::= const <constantes> end;
+void declaracao_constante() :
+{}
+{
+    <CONST> constantes() <END> <PONTOVIRGULA>
+}
+
+// <constantes> ::= <tipo> : <lista de identificadores> = <valor> . <constantes'>
+void constantes() :
+{}
+{
+    tipo() <DOISPONTOS> lista_identificadores() <IGUAL> valor() <PONTO> constantes_prime()
+}
+
+// <valor> ::= constante inteira | constante real | constante literal
+void valor() :
+{}
+{
+    <CONSTANTE_INTEIRA> | <CONSTANTE_REAL> | <CONSTANTE_LITERAL>
+}
+
+// <tipo> ::= int | real | char
+void tipo() :
+{}
+{
+    <INT> | <REAL> | <CHAR>
+}
+
+// <lista de identificadores> ::= identificador <lista de identificadores'>
+void lista_identificadores() :
+{}
+{
+    identificador() lista_identificadores_prime()
+}
+
+// <lista de identificadores'> ::= , identificador <lista de identificadores'> | £
+void lista_identificadores_prime() :
+{}
+{
+    (<VIRGULA> identificador() lista_identificadores_prime())?
+}
+
+// <constantes'> ::= <constantes> | £
+void constantes_prime() :
+{}
+{
+    (constantes())?
+}
+
+// <declaracao de variavel> ::= var <variaveis> end;
+void declaracao_variavel() :
+{}
+{
+    <VAR> variaveis() <END> <PONTOVIRGULA>
+}
+
+// <variaveis> ::= <tipo'> : <lista de identificadores>.<variavel>
+void variaveis() :
+{}
+{
+    tipo_prime() <DOISPONTOS> lista_identificadores() <PONTO> variavel()
+}
+
+// <variavel> ::= <variaveis> | £
+void variavel() :
+{}
+{
+    (variaveis())?
+}
+
+// <tipo'> ::= <tipo> | bool
+void tipo_prime() :
+{}
+{
+    tipo() | <BOOL>
+}
+
+// <lista de comandos> ::= <comando> <lista de comandos'>
+void lista_comandos() :
+{}
+{
+    comando() lista_comandos_prime()
+}
+
+// <lista de comandos'> ::= <lista de comandos> | £
+void lista_comandos_prime() :
+{}
+{
+    (lista_comandos())?
+}
+
+// <comando> ::= <atribuicao> | <entrada> | <saida> | <selecao> | <repeticao>
+void comando() :
+{}
+{
+    atribuicao() | entrada() | saida() | selecao() | repeticao()
+}
+
+// <atribuicao> ::= <expressao> -> identificador.
+void atribuicao() :
+{}
+{
+    expressao() <ATRIBUICAO> identificador() <PONTO>
+}
+
+// <expressao> ::= <expressao aritmética ou lógica> <expressao'>
+void expressao() :
+{}
+{
+    expressao_aritmetica_ou_logica() expressao_prime()
+}
+
+// <expressao'> ::= = <expressao aritmética ou lógica> | <> <expressao aritmética ou lógica> | < | > | <= | >= | £
+void expressao_prime() :
+{}
+{
+    (<IGUAL> expressao_aritmetica_ou_logica()
+    | <DIFERENTE> expressao_aritmetica_ou_logica()
+    | <MENOR> expressao_aritmetica_ou_logica()
+    | <MAIOR> expressao_aritmetica_ou_logica()
+    | <MENOR_IGUAL> expressao_aritmetica_ou_logica()
+    | <MAIOR_IGUAL> expressao_aritmetica_ou_logica())?
+}
+
+// <expressao aritmética ou lógica> ::= <termo> <lista de termos>
+void expressao_aritmetica_ou_logica() :
+{}
+{
+    termo() lista_termos()
+}
+
+// <lista de termos> ::= <operação> <termo> <lista de termos> | £
+void lista_termos() :
+{}
+{
+    (operacao() termo() lista_termos())
+}
+
+// <termo> ::= <fator> <lista de fatores>
+void termo() :
+{}
+{
+    fator() lista_fatores()
+}
+
+// <lista de fatores> ::= <operacao> <fator> <lista de fatores> | £
+void lista_fatores() :
+{}
+{
+    fator() (operacao() fator())
+}
+
+
+// <fator> ::= identificador | constante
+void fator() :
+{}
+{
+    identificador() | valor()
+}
+
+// <operacao> ::= + | - | * | /
+void operacao() :
+{}
+{
+    <ADICAO> | <SUBTRACAO> | <MULTIPLICACAO> | <DIVISAO>
+}
+
+// <entrada> ::= read identificador.
+void entrada() :
+{}
+{
+    <GET> identificador() <PONTO>
+}
+
+// <saida> ::= write <valor>.
+void saida() :
+{}
+{
+    <PUT> valor() <PONTO>
+}
+
+// <selecao> ::= if <expressao> then <lista de comandos> else <lista de comandos> end.
+void selecao() :
+{}
+{
+    <IF> expressao() <THEN> lista_comandos() <ELSE> lista_comandos() <END><PONTO>
+}
+
+// <repeticao> ::= while <expressao> do <lista de comandos> end.
+void repeticao() :
+{}
+{
+    <WHILE> expressao() <DO> lista_comandos() <END><PONTO>
+}
+
+// <identificador> ::= <LETTER> (<LETTER> | <DIGIT>)*
+void identificador() :
+{}
+{
+    [<IDENTIFICADOR>]
+}
