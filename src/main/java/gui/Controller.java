@@ -56,16 +56,6 @@ public class Controller {
         column2.setCellValueFactory(cellData -> cellData.getValue().col2Property());
         column3.setCellValueFactory(cellData -> cellData.getValue().col3Property());
     }
-
-    private void updateIntermediateCodeTable(List<IntermediateCode> intermediateCodeList) {
-        intermediateCodeTable.getItems().setAll(intermediateCodeList);
-    }
-
-    // Método para chamar o analisador semântico e atualizar a tabela
-    private void analisarSemantica(String codigo) {
-        List<IntermediateCode> intermediateCodeList = LanguageParser.analisadorSemantico(codigo);
-        updateIntermediateCodeTable(intermediateCodeList);
-    }
     
     @FXML
     public void openFileDialog(ActionEvent actionEvent) {
@@ -309,6 +299,17 @@ public class Controller {
             return;
         }
         analisadorSintatico();
+        analisarSemantica(this.inputTextArea.getText());
+    }
+
+    private void updateIntermediateCodeTable(List<IntermediateCode> intermediateCodeList) {
+        intermediateCodeTable.getItems().setAll(intermediateCodeList);
+    }
+
+    // Método para chamar o analisador semântico e atualizar a tabela
+    private void analisarSemantica(String codigo) {
+        List<IntermediateCode> intermediateCodeList = LanguageParser.analisadorSemantico(codigo);
+        updateIntermediateCodeTable(intermediateCodeList);
     }
 
     private boolean hasLexicalErrors() {

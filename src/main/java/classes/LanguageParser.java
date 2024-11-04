@@ -35,11 +35,12 @@ public class LanguageParser implements LanguageParserConstants {
       // Implementação do analisador semântico que retorna a lista de IntermediateCode
       List<IntermediateCode> intermediateCodeList = new ArrayList<>();
       // Adicione a lógica para preencher a lista com o código intermediário
+
       // Exemplo de preenchimento:
       intermediateCodeList.add(new IntermediateCode("Comando 1", "Argumento 1", "Resultado 1"));
       intermediateCodeList.add(new IntermediateCode("Comando 2", "Argumento 2", "Resultado 2"));
       return intermediateCodeList;
-  }
+    }
 
     public static LanguageParser create(String stream) {
         InputStream target = new ByteArrayInputStream(stream.getBytes());
