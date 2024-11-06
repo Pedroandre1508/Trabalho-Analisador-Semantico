@@ -26,9 +26,6 @@ public class LanguageParser implements LanguageParserConstants {
         } catch (ParseException e) {
             output.add(new ErrorStruct("Erro parsing programa.\u005cn", e));
         }
-        ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
-        output.clear();
-        return tmp;
     }
     
     public static List<IntermediateCode> analisadorSemantico(String stream) {
