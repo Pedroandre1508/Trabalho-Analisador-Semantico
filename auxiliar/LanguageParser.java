@@ -11,7 +11,7 @@ import util.OutputData;
 public class LanguageParser implements LanguageParserConstants {
      private int contParseError = 0;
   private boolean debugRecovery = true;
-  private final static List<AErrorStruct> output = new ArrayList<AErrorStruct>();
+  private final static List<ErrorStruct> output = new ArrayList<ErrorStruct>();
   private boolean eof;
 
   public static List<Token> getTokens(String stream) {
@@ -20,77 +20,22 @@ public class LanguageParser implements LanguageParserConstants {
       return tokenize(parser);
   }
 
-  public static ArrayList<AErrorStruct> analisadorSintatico(String input) {
-    ArrayList<AErrorStruct> output = new ArrayList<>();
-    LanguageParser parser = create(input);
-    boolean hasErrors = false;
-    int maxAttempts = 100; // Limite de tentativas para evitar loop infinito
-    int attempts = 0;
-
-    while (attempts < maxAttempts) {
-        try {
-            parser.programa();
-            break; // Saia do loop se a análise for bem-sucedida
-        } catch (ParseException e) {
-            hasErrors = true;
-            AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", e);
-            errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
-            output.add(errorStruct);
-            parser.advanceAfterError(); // Avance no fluxo de entrada após encontrar um erro
-            attempts++;
-        }
-    }
-
-    return output;
-  }
-
-  private void captureAllErrors(ArrayList<AErrorStruct> output) {
-    while (true) {
-        Token token = getNextToken();
-        if (token.kind == LanguageParserConstants.EOF) {
-            break;
-        }
-        if (token.kind == LanguageParserConstants.SIMBOLO_INVALIDO || token.kind == LanguageParserConstants.CONSTANTE_INTEIRA_INVALIDA
-                || token.kind == LanguageParserConstants.CONSTANTE_REAL_INVALIDA || token.kind == LanguageParserConstants.CONSTANTE_LITERAL_INVALIDA || token.kind == LanguageParserConstants.IDENTIFICADOR_INVALIDO) {
-            AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", token);
-            errorStruct.setExpected(new int[][]{{token.kind}}, LanguageParserConstants.tokenImage);
-            output.add(errorStruct);
-            advanceAfterError(); // Avance no fluxo de entrada após encontrar um erro
-        }
-    }
-  }
-
-  private void advanceAfterError() {
-    int maxAttempts = 100; // Limite de tentativas para evitar loop infinito
-    int attempts = 0;
-
-    while (attempts < maxAttempts) {
-        try {
-            Token token = getNextToken();
-            System.out.println("Consumed token: " + token); // Adicione esta linha para depuração
-            if (token.kind == LanguageParserConstants.EOF || isSafePoint(token)) {
-                break;
-            }
-        } catch (Exception e) {
-            break;
-        }
-        attempts++;
-    }
-
-    if (attempts >= maxAttempts) {
-        System.err.println("Erro: Limite de tentativas atingido ao tentar avançar após erro.");
-    }
-  }
-
-  private boolean isSafePoint(Token token) {
-    return token.kind == LanguageParserConstants.PONTOVIRGULA || token.kind == LanguageParserConstants.FECHA_PARENTESES
-        || token.kind == LanguageParserConstants.EOF || token.kind == LanguageParserConstants.END
-        || token.kind == LanguageParserConstants.PONTO || token.kind == LanguageParserConstants.DOISPONTOS;
+  public static ArrayList<ErrorStruct> analisadorSintatico(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      LanguageParser parser = new LanguageParser(target);
+      try {
+          parser.programa();
+      } catch (ParseException e) {
+          output.add(new ErrorStruct("Error parsing the program.\n", e));
+      }
+      ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
+      output.clear();
+      return tmp;
   }
 
   public static LanguageParser create(String stream) {
-    InputStream target = new ByteArrayInputStream(stream.getBytes());
-    return new LanguageParser(target);
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      return new LanguageParser(target);
   }
 
   public static void main(String[] args) throws TokenMgrError, ParseException {
@@ -116,8 +61,8 @@ public class LanguageParser implements LanguageParserConstants {
           token = parser.getNextToken();
       }
 
-      if (!ATokenHandler.isClosed()) {
-          tokens.add(ATokenHandler.createToken());
+      if (!TokenHandler.isClosed()) {
+          tokens.add(TokenHandler.createToken());
       }
       return tokens;
   }
@@ -133,7 +78,7 @@ public class LanguageParser implements LanguageParserConstants {
       return s;
   }
 
-  public void consumeUntil(ARecoverySet g, ParseException e, String met) throws ParseException {
+  public void consumeUntil(RecoverySet g, ParseException e, String met) throws ParseException {
       Token tok;
       if (g == null) {
           throw e;
@@ -153,11 +98,11 @@ public class LanguageParser implements LanguageParserConstants {
   }
 
   // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
-  public static List<AIntermediateCode> analisadorSemantico(String input) {
-      List<AIntermediateCode> AIntermediateCodeList = new ArrayList<>();
+  public static List<IntermediateCode> analisadorSemantico(String input) {
+      List<IntermediateCode> intermediateCodeList = new ArrayList<>();
       // Lógica para análise semântica e geração de código intermediário
-      // Adicione os códigos intermediários gerados à lista AIntermediateCodeList
-      return AIntermediateCodeList;
+      // Adicione os códigos intermediários gerados à lista intermediateCodeList
+      return intermediateCodeList;
   }
 
 //Analisador Sintatico

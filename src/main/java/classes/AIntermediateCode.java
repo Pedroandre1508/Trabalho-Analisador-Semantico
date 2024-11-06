@@ -3,12 +3,12 @@ package classes;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-public class IntermediateCode {
+public class AIntermediateCode {
     private final StringProperty col1;
     private final StringProperty col2;
     private final StringProperty col3;
 
-    public IntermediateCode(String col1, String col2, String col3) {
+    public AIntermediateCode(String col1, String col2, String col3) {
         this.col1 = new SimpleStringProperty(col1);
         this.col2 = new SimpleStringProperty(col2);
         this.col3 = new SimpleStringProperty(col3);

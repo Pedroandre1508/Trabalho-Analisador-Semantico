@@ -17,100 +17,108 @@ import java.io.ByteArrayInputStream;
 import util.OutputData;
 
 public class LanguageParser {
-    private int contParseError = 0;
-    private boolean debugRecovery = true;
-    private final static List<ErrorStruct> output = new ArrayList<ErrorStruct>();
-    private boolean eof;
+     private int contParseError = 0;
+  private boolean debugRecovery = true;
+  private final static List<ErrorStruct> output = new ArrayList<ErrorStruct>();
+  private boolean eof;
 
-    public static List<Token> getTokens(String stream) {
-        InputStream target = new ByteArrayInputStream(stream.getBytes());
-        LanguageParser parser = new LanguageParser(target);
-        return tokenize(parser);
-    }
+  public static List<Token> getTokens(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      LanguageParser parser = new LanguageParser(target);
+      return tokenize(parser);
+  }
 
-    public static ArrayList<ErrorStruct> analisadorSintatico(String stream) {
-        InputStream target = new ByteArrayInputStream(stream.getBytes());
-        LanguageParser parser = new LanguageParser(target);
+  public static ArrayList<ErrorStruct> analisadorSintatico(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      LanguageParser parser = new LanguageParser(target);
+      try {
+          parser.programa();
+      } catch (ParseException e) {
+          output.add(new ErrorStruct("Error parsing the program.\n", e));
+      }
+      ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
+      output.clear();
+      return tmp;
+  }
+
+  public static LanguageParser create(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      return new LanguageParser(target);
+  }
+
+  public static void main(String[] args) throws TokenMgrError, ParseException {
+    LanguageParser parser;
+    if (args.length == 0) {
+        parser = new LanguageParser(System.in);
+    } else if (args.length == 1) {
         try {
-            parser.programa();
-        } catch (ParseException e) {
-            output.add(new ErrorStruct("Error parsing the program.\n", e));
-        }
-        ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
-        output.clear();
-        return tmp;
-    }
-
-    public static LanguageParser create(String stream) {
-        InputStream target = new ByteArrayInputStream(stream.getBytes());
-        return new LanguageParser(target);
-    }
-
-    public static void main(String[] args) throws TokenMgrError, ParseException {
-        LanguageParser parser;
-        if (args.length == 0) {
-            parser = new LanguageParser(System.in);
-        } else if (args.length == 1) {
-            try {
-                parser = new LanguageParser(new java.io.FileInputStream(args[0]));
-            } catch (java.io.FileNotFoundException e) {
-                System.out.println("LanguageParser: file " + args[0] + " was not found.");
-                return;
-            }
+            parser = new LanguageParser(new java.io.FileInputStream(args[0]));
+        } catch (java.io.FileNotFoundException e) {
+            System.out.println("LanguageParser: file " + args[0] + " was not found.");
+            return;
         }
     }
+}
 
-    public static List<Token> tokenize(LanguageParser parser) {
-        List<Token> tokens = new ArrayList<Token>();
-        Token token = parser.getNextToken();
+  public static List<Token> tokenize(LanguageParser parser) {
+      List<Token> tokens = new ArrayList<Token>();
+      Token token = parser.getNextToken();
 
-        while (token.kind != LanguageParserConstants.EOF) {
-            tokens.add(token);
-            token = parser.getNextToken();
-        }
+      while (token.kind != LanguageParserConstants.EOF) {
+          tokens.add(token);
+          token = parser.getNextToken();
+      }
 
-        if (!TokenHandler.isClosed()) {
-            tokens.add(TokenHandler.createToken());
-        }
-        return tokens;
-    }
+      if (!TokenHandler.isClosed()) {
+          tokens.add(TokenHandler.createToken());
+      }
+      return tokens;
+  }
 
-    static public String im(int x) {
-        String s = tokenImage[x];
-        int k = s.lastIndexOf("\"");
-        try {
-            s = s.substring(1, k);
-        } catch (StringIndexOutOfBoundsException e) {
-            // Handle exception or log if necessary
-        }
-        return s;
-    }
+  static public String im(int x) {
+      String s = tokenImage[x];
+      int k = s.lastIndexOf("\"");
+      try {
+          s = s.substring(1, k);
+      } catch (StringIndexOutOfBoundsException e) {
+          // Handle exception or log if necessary
+      }
+      return s;
+  }
 
-    public void consumeUntil(RecoverySet g, ParseException e, String met) throws ParseException {
-        Token tok;
-        if (g == null) {
-            throw e;
-        }
-        tok = getToken(1);
-        while (!eof) {
-            if (g.contains(tok.kind)) {
-                break;
-            }
-            getNextToken();
-            tok = getToken(1);
-            if (tok.kind == EOF && !g.contains(EOF)) {
-                eof = true;
-            }
-        }
-        contParseError++;
-    }
+  public void consumeUntil(RecoverySet g, ParseException e, String met) throws ParseException {
+      Token tok;
+      if (g == null) {
+          throw e;
+      }
+      tok = getToken(1);
+      while (!eof) {
+          if (g.contains(tok.kind)) {
+              break;
+          }
+          getNextToken();
+          tok = getToken(1);
+          if (tok.kind == EOF && !g.contains(EOF)) {
+              eof = true;
+          }
+      }
+      contParseError++;
+  }
+
+  // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
+  public static List<IntermediateCode> analisadorSemantico(String input) {
+      List<IntermediateCode> intermediateCodeList = new ArrayList<>();
+      // Lógica para análise semântica e geração de código intermediário
+      // Adicione os códigos intermediários gerados à lista intermediateCodeList
+      return intermediateCodeList;
+  }
 }
 
 PARSER_END(LanguageParser)
 //TOKENS
 //CARACTERES ESPECIAIS IGNORADOS
 SKIP : {
-    " " | "\t" | "\n" | "\r" | "\f" | "\r\n"  |  "\n\r"
+    <NovaLinha: (" " | "\t" | "\n" | "\r" | "\f" | "\r\n"  |  "\n\r")>
 }
 // DECLARAÇÕES DE GERENCIAMENTO DE TOKEN
 TOKEN_MGR_DECLS: {
@@ -246,129 +254,165 @@ TOKEN :
 void programa() :
 {}
 {
-    <MAKE> identificador() declaracao_constantes_variaveis() lista_comandos() <END> <PONTO>
+    <MAKE> identificador_do_programa() declaracao_constantes_variaveis() lista_comandos() <END> <PONTO>
 }
 
-// <declaracao de constantes ou variaveis> ::= <declaracao de constante> | <declaracao de variavel> | £
+void identificador_do_programa() :
+{}
+{
+    [identificador()]
+}
+
 void declaracao_constantes_variaveis() :
 {}
 {
-    (declaracao_constante() | declaracao_variavel())
+    (constantes_e_variaveis())?
 }
 
-// <declaracao de constante> ::= const <constantes> end;
-void declaracao_constante() :
+void constantes_e_variaveis() :
+{}
+{
+    (declaracao_constantes() constantes_e_variaveis_prime() | declaracao_variaveis() constantes_e_variaveis_prime())
+}
+
+void constantes_e_variaveis_prime() :
+{}
+{
+    (declaracao_constantes() constantes_e_variaveis_prime() | declaracao_variaveis() constantes_e_variaveis_prime())?
+}
+
+void declaracao_constantes() :
 {}
 {
     <CONST> constantes() <END> <PONTOVIRGULA>
 }
 
-// <constantes> ::= <tipo> : <lista de identificadores> = <valor> . <constantes'>
 void constantes() :
 {}
 {
     tipo() <DOISPONTOS> lista_identificadores() <IGUAL> valor() <PONTO> constantes_prime()
 }
 
-// <valor> ::= constante inteira | constante real | constante literal
-void valor() :
-{}
-{
-    <CONSTANTE_INTEIRA> | <CONSTANTE_REAL> | <CONSTANTE_LITERAL>
-}
-
-// <tipo> ::= int | real | char
-void tipo() :
-{}
-{
-    <INT> | <REAL> | <CHAR>
-}
-
-// <lista de identificadores> ::= identificador <lista de identificadores'>
-void lista_identificadores() :
-{}
-{
-    identificador() lista_identificadores_prime()
-}
-
-// <lista de identificadores'> ::= , identificador <lista de identificadores'> | £
-void lista_identificadores_prime() :
-{}
-{
-    (<VIRGULA> identificador() lista_identificadores_prime())?
-}
-
-// <constantes'> ::= <constantes> | £
 void constantes_prime() :
 {}
 {
     (constantes())?
 }
 
-// <declaracao de variavel> ::= var <variaveis> end;
-void declaracao_variavel() :
+void declaracao_variaveis() :
 {}
 {
     <VAR> variaveis() <END> <PONTOVIRGULA>
 }
 
-// <variaveis> ::= <tipo'> : <lista de identificadores>.<variavel>
 void variaveis() :
 {}
 {
-    tipo_prime() <DOISPONTOS> lista_identificadores() <PONTO> variavel()
+    tipo() <DOISPONTOS> lista_identificadores() <PONTO> variaveis_prime()
 }
 
-// <variavel> ::= <variaveis> | £
-void variavel() :
+void variaveis_prime() :
 {}
 {
     (variaveis())?
 }
 
-// <tipo'> ::= <tipo> | bool
-void tipo_prime() :
+void tipo() :
 {}
 {
-    tipo() | <BOOL>
+    <INT> | <REAL> | <CHAR> | <BOOL>
 }
 
-// <lista de comandos> ::= <comando> <lista de comandos'>
+void lista_identificadores() :
+{}
+{
+    identificador() lista_identificadores_prime()
+}
+
+void lista_identificadores_prime() :
+{}
+{
+    (<VIRGULA> lista_identificadores())?
+}
+
 void lista_comandos() :
 {}
 {
-    comando() lista_comandos_prime()
+    comando() <PONTO> lista_comandos_prime()
 }
 
-// <lista de comandos'> ::= <lista de comandos> | £
 void lista_comandos_prime() :
 {}
 {
     (lista_comandos())?
 }
 
-// <comando> ::= <atribuicao> | <entrada> | <saida> | <selecao> | <repeticao>
 void comando() :
 {}
 {
     atribuicao() | entrada() | saida() | selecao() | repeticao()
 }
 
-// <atribuicao> ::= <expressao> -> identificador.
 void atribuicao() :
 {}
 {
-    expressao() <ATRIBUICAO> identificador() <PONTO>
+    expressao() <ATRIBUICAO> identificador()
 }
 
-// <expressao> ::= <expressao aritmética ou lógica> <expressao'>
+void entrada() :
+{}
+{
+    <GET> <ABRE_PARENTESES> lista_identificadores() <FECHA_PARENTESES>
+}
+
+void saida() :
+{}
+{
+    <PUT> <ABRE_PARENTESES> lista_identificadores_e_ou_constantes() <FECHA_PARENTESES>
+}
+
+void lista_identificadores_e_ou_constantes() :
+{}
+{
+    item() lista_identificadores_e_ou_constantes_prime()
+}
+
+void lista_identificadores_e_ou_constantes_prime() :
+{}
+{
+    (<VIRGULA> lista_identificadores_e_ou_constantes())?
+}
+
+void item() :
+{}
+{
+    identificador() | <CONSTANTE_INTEIRA> | <CONSTANTE_REAL> | <CONSTANTE_LITERAL> | <TRUE> | <FALSE>
+}
+
+void selecao() :
+{}
+{
+    <IF> expressao() <THEN> lista_comandos() senao() <END> <PONTO>
+}
+
+void senao() :
+{}
+{
+    (<ELSE> lista_comandos())?
+}
+
+void repeticao() :
+{}
+{
+    <WHILE> expressao() <DO> lista_comandos() <END> <PONTO>
+}
+
 void expressao() :
 {}
 {
     expressao_aritmetica_ou_logica() expressao_prime()
 }
 
-// <expressao'> ::= = <expressao aritmética ou lógica> | <> <expressao aritmética ou lógica> | < | > | <= | >= | £
 void expressao_prime() :
 {}
 {
@@ -380,80 +424,62 @@ void expressao_prime() :
     | <MAIOR_IGUAL> expressao_aritmetica_ou_logica())?
 }
 
-// <expressao aritmética ou lógica> ::= <termo> <lista de termos>
 void expressao_aritmetica_ou_logica() :
 {}
 {
-    termo() lista_termos()
+    termo2() menor_prioridade()
 }
 
-// <lista de termos> ::= <operação> <termo> <lista de termos> | £
-void lista_termos() :
+void menor_prioridade() :
 {}
 {
-    (operacao() termo() lista_termos())
+    (<ADICAO> termo2() menor_prioridade()
+    | <SUBTRACAO> termo2() menor_prioridade()
+    | <OU> termo2() menor_prioridade())?
 }
 
-// <termo> ::= <fator> <lista de fatores>
-void termo() :
+void termo2() :
 {}
 {
-    fator() lista_fatores()
+    termo1() media_prioridade()
 }
 
-// <lista de fatores> ::= <operacao> <fator> <lista de fatores> | £
-void lista_fatores() :
+void media_prioridade() :
 {}
 {
-    fator() (operacao() fator())
+    (<MULTIPLICACAO> termo1() media_prioridade()
+    | <DIVISAO> termo1() media_prioridade()
+    | <DIVISAO_INTEIRA> termo1() media_prioridade()
+    | <RESTO> termo1() media_prioridade()
+    | <E> termo1() media_prioridade())?
 }
 
-
-// <fator> ::= identificador | constante
-void fator() :
+void termo1() :
 {}
 {
-    identificador() | valor()
+    elemento() maior_prioridade()
 }
 
-// <operacao> ::= + | - | * | /
-void operacao() :
+void maior_prioridade() :
 {}
 {
-    <ADICAO> | <SUBTRACAO> | <MULTIPLICACAO> | <DIVISAO>
+    (<POTENCIA> elemento() maior_prioridade())?
 }
 
-// <entrada> ::= read identificador.
-void entrada() :
+void elemento() :
 {}
 {
-    <GET> identificador() <PONTO>
+    identificador() | <CONSTANTE_INTEIRA> | <CONSTANTE_REAL> | <CONSTANTE_LITERAL> | <TRUE> | <FALSE> | <ABRE_PARENTESES> expressao() <FECHA_PARENTESES> | <NAO> <ABRE_PARENTESES> expressao() <FECHA_PARENTESES>
 }
 
-// <saida> ::= write <valor>.
-void saida() :
-{}
-{
-    <PUT> valor() <PONTO>
-}
-
-// <selecao> ::= if <expressao> then <lista de comandos> else <lista de comandos> end.
-void selecao() :
-{}
-{
-    <IF> expressao() <THEN> lista_comandos() <ELSE> lista_comandos() <END><PONTO>
-}
-
-// <repeticao> ::= while <expressao> do <lista de comandos> end.
-void repeticao() :
-{}
-{
-    <WHILE> expressao() <DO> lista_comandos() <END><PONTO>
-}
-
-// <identificador> ::= <LETTER> (<LETTER> | <DIGIT>)*
 void identificador() :
 {}
 {
-    [<IDENTIFICADOR>]
+    <IDENTIFICADOR>
+}
+
+void valor() :
+{}
+{
+    <CONSTANTE_INTEIRA> | <CONSTANTE_REAL> | <CONSTANTE_LITERAL> | <TRUE> | <FALSE>
 }

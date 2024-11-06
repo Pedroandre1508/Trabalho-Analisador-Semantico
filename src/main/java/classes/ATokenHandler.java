@@ -1,6 +1,6 @@
 package classes;
 
-public class TokenHandler {
+public class ATokenHandler {
     private static boolean closed = true;
     private static String token;
     private static int column;
@@ -29,7 +29,7 @@ public class TokenHandler {
     }
 
     public static void setClosed(boolean closed) {
-        TokenHandler.closed = closed;
+        ATokenHandler.closed = closed;
     }
 
     public static String getToken() {
@@ -42,7 +42,7 @@ public class TokenHandler {
     }
 
     public static void setLine(int line) {
-        TokenHandler.line = line;
+        ATokenHandler.line = line;
     }
 
     public static int getId() {
@@ -50,11 +50,11 @@ public class TokenHandler {
     }
 
     public static void setId(int id) {
-        TokenHandler.id = id;
+        ATokenHandler.id = id;
     }
 
     public static void setToken(String token) {
-        TokenHandler.token = token;
+        ATokenHandler.token = token;
     }
 
     public static int getColumn() {
@@ -62,7 +62,7 @@ public class TokenHandler {
     }
 
     public static void setColumn(int column) {
-        TokenHandler.column = column;
+        ATokenHandler.column = column;
     }
 }
 

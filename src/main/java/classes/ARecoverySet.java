@@ -3,12 +3,12 @@ package classes;
 import java.util.HashSet;
 import java.util.Iterator;
 
-public class RecoverySet extends HashSet {
-    public RecoverySet() {
+public class ARecoverySet extends HashSet {
+    public ARecoverySet() {
         super();
     }
 
-    public RecoverySet(int t){
+    public ARecoverySet(int t){
         this.add(t);
     }
 
@@ -16,17 +16,17 @@ public class RecoverySet extends HashSet {
         return super.contains(t);
     }
 
-    public RecoverySet union(RecoverySet s){
-        RecoverySet t = null;
+    public ARecoverySet union(ARecoverySet s){
+        ARecoverySet t = null;
         if (s != null){
-            t = (RecoverySet) this.clone();
+            t = (ARecoverySet) this.clone();
             this.addAll(s);
         }
         return t;
     }
 
-    public RecoverySet remove(int n){
-        RecoverySet t = (RecoverySet) this.clone();
+    public ARecoverySet remove(int n){
+        ARecoverySet t = (ARecoverySet) this.clone();
         t.remove(n);
         return t;
     }
