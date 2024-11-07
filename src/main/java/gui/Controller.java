@@ -300,7 +300,7 @@ public class Controller {
         }
 
         // Realiza a análise léxica
-        //analisadorLexico();
+        analisadorLexico();
 
         // Verifica se há erros léxicos
         if (hasLexicalErrors()) {
