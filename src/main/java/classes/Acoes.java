@@ -6,7 +6,7 @@ public class Acoes {
     int VT = 0, VP = 0, ponteiro = 1;
     String contexto;
     int tipo; // Corrigido para ser um único valor em vez de uma lista
-    //ArrayList<Integer> pilhaDesvios = new ArrayList<>();
+    ArrayList<Integer> pilhaDesvios = new ArrayList<>();
     ArrayList<String> areaInstrucoes = new ArrayList<>();
     ArrayList<String> tabelaSimbolos = new ArrayList<>();
 
