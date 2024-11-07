@@ -13,6 +13,16 @@ public class LanguageParser implements LanguageParserConstants {
     private final static List<AErrorStruct> output = new ArrayList<AErrorStruct>();
     private boolean eof;
 
+    private Acoes acoesSemanticas = new Acoes();
+
+
+    int VT = 0, VP = 0,ponteiro = 0;
+    String contexto;
+    ArrayList<Integer> tipo = new ArrayList<>();
+    ArrayList<String> pilhaDesvios = new ArrayList<>();
+    ArrayList<String> areaInstrucoes = new ArrayList<>();
+    ArrayList<String> tabelaSimbolos = new ArrayList<>();
+
     public static void main(String[] args) throws TokenMgrError, ParseException {
       LanguageParser parser;
       if (args.length == 0) {
@@ -86,10 +96,11 @@ public class LanguageParser implements LanguageParserConstants {
         return output;
     }
 
-    // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
     public static List<AIntermediateCode> analisadorSemantico(String input) {
       List<AIntermediateCode> intermediateCodeList = new ArrayList<>();
-      // Lógica para análise semântica e geração de código intermediário
+
+      //logica
+
       // Exemplo de adição de código intermediário:
       intermediateCodeList.add(new AIntermediateCode("Instrução 1", "Operando 1", "Operando 2"));
       intermediateCodeList.add(new AIntermediateCode("Instrução 2", "Operando 3", "Operando 4"));
