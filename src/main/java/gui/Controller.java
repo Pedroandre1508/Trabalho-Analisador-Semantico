@@ -31,14 +31,14 @@ public class Controller {
     private static boolean hasOpenFile = false;
     @FXML
     private Stage stage;
-    
+
     public CodeArea inputTextArea;
     public TextArea messageTextArea;
     public Label statusBar, lineColLabel;
     // Menu bar items
     public MenuItem saveMenuItem, saveAsMenuItem, exitProgramItem;
     public MenuItem cutMenuItem, copyMenuItem, pasteMenuItem;
-    //  Menu toolbar buttons
+    // Menu toolbar buttons
     public Button newBtn, openBtn, saveBtn;
     public Button copyBtn, cutBtn, pasteBtn;
     public Button buildBtn, runBtn;
@@ -74,13 +74,11 @@ public class Controller {
         editorFile = new EditorFile(filePicker.showOpenDialog(new Stage()), false);
 
         if (!editorFile.isFileStatusOK()) {
-            Alert alert = AlertFactory.create
-                    (
-                            Alert.AlertType.ERROR,
-                            "Erro",
-                            "Erro",
-                            String.format("Falha ao abrir arquivo: %s", editorFile.getFileStatus())
-                    );
+            Alert alert = AlertFactory.create(
+                    Alert.AlertType.ERROR,
+                    "Erro",
+                    "Erro",
+                    String.format("Falha ao abrir arquivo: %s", editorFile.getFileStatus()));
             alert.showAndWait();
             return;
         }
@@ -148,13 +146,11 @@ public class Controller {
         EditorFile newED = new EditorFile(newFile, false);
         switch (newED.getFileStatus()) {
             case INVALID_EXTENSION -> {
-                AlertFactory.create
-                        (
-                                Alert.AlertType.ERROR,
-                                "Erro",
-                                "Extensao invalida",
-                                "O nome do arquivo deve usar a extensao '.txt'"
-                        ).show();
+                AlertFactory.create(
+                        Alert.AlertType.ERROR,
+                        "Erro",
+                        "Extensao invalida",
+                        "O nome do arquivo deve usar a extensao '.txt'").show();
                 op = Operation.FAILURE;
             }
             case IO_ERROR -> {
@@ -162,18 +158,15 @@ public class Controller {
                         Alert.AlertType.ERROR,
                         "Erro",
                         "Erro de leitura/escrita de arquivo",
-                        "Erro ao ler/escrever arquivo"
-                ).show();
+                        "Erro ao ler/escrever arquivo").show();
                 op = Operation.FAILURE;
             }
             case NO_OPEN_FILE -> {
-                AlertFactory.create
-                        (
-                                Alert.AlertType.INFORMATION,
-                                "Info",
-                                "Operacao cancelada",
-                                "Salvar em um novo arquivo cancelado"
-                        ).show();
+                AlertFactory.create(
+                        Alert.AlertType.INFORMATION,
+                        "Info",
+                        "Operacao cancelada",
+                        "Salvar em um novo arquivo cancelado").show();
                 op = Operation.CANCELED;
             }
             case OK -> {
@@ -249,8 +242,7 @@ public class Controller {
             alert = AlertFactory.AlertYesNoCancel(Alert.AlertType.CONFIRMATION,
                     "Confirmacao",
                     "Arquivo nao salvo",
-                    "Voce editou um arquivo aberto e nao salvou, deseja salva-lo?"
-            );
+                    "Voce editou um arquivo aberto e nao salvou, deseja salva-lo?");
         } else {
             return Operation.SUCCESS;
         }
@@ -298,7 +290,7 @@ public class Controller {
         if (this.inputTextArea.getText().length() == 0) {
             return;
         }
-
+    
         // Realiza a análise léxica
         analisadorLexico();
 
@@ -310,10 +302,13 @@ public class Controller {
         // Realiza a análise sintática
         analisadorSintatico();
 
-        if (!hasSyntaxErrors()) {
-            // Realiza a análise semântica
-            analisarSemantica(this.inputTextArea.getText());
+        // Verifica se há erros sintáticos
+        if (hasSyntaxErrors()) {
+            return;
         }
+
+        // Realiza a análise semântica
+        analisarSemantica(this.inputTextArea.getText());
     }
 
     private boolean hasSyntaxErrors() {
@@ -324,7 +319,7 @@ public class Controller {
     private boolean hasLexicalErrors() {
         // Verifique se há erros léxicos na área de mensagens
         String messageContent = this.messageTextArea.getText();
-        return messageContent.contains("Erro:"); // ou alguma outra lógica que você utiliza para detectar erros
+        return messageContent.contains("Erro(s) lexicos encontrados ");
     }
 
     private void analisadorLexico() {
@@ -332,31 +327,20 @@ public class Controller {
         ArrayList<Token> tokens = (ArrayList<Token>) LanguageParser.getTokens(this.inputTextArea.getText());
         int counter = 0;
         for (Token token : tokens) {
-            if (token.kind == LanguageParserConstants.SIMBOLO_INVALIDO || token.kind == LanguageParserConstants.CONSTANTE_INTEIRA_INVALIDA
-                    || token.kind == LanguageParserConstants.CONSTANTE_REAL_INVALIDA || token.kind == LanguageParserConstants.CONSTANTE_LITERAL_INVALIDA || token.kind == LanguageParserConstants.IDENTIFICADOR_INVALIDO) {
+            if (token.kind == LanguageParserConstants.SIMBOLO_INVALIDO
+                    || token.kind == LanguageParserConstants.CONSTANTE_INTEIRA_INVALIDA
+                    || token.kind == LanguageParserConstants.CONSTANTE_REAL_INVALIDA
+                    || token.kind == LanguageParserConstants.CONSTANTE_LITERAL_INVALIDA
+                    || token.kind == LanguageParserConstants.IDENTIFICADOR_INVALIDO) {
                 counter++;
-                switch (token.kind) {
-                    case 60:
-                        this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Simbolo Invalido, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
-                        break;
-                    case 61:
-                        this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Inteira Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
-                        break;
-                    case 62:
-                        this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Real Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
-                        break;
-                    case 63:
-                        this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Literal Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
-                        break;
-                    case 64:
-                        this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Identificador Invalido, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
-                        break;
-                }
             }
         }
-        this.messageTextArea.appendText("\nErro(s) lexicos encontrados: " + counter);
         if (counter == 0) {
-            this.messageTextArea.appendText("0\n");
+            this.messageTextArea.appendText("\nNão há erro(s) lexicos ");
+        }
+        else{
+            System.err.println("Erro léxico: ");
+            this.messageTextArea.appendText("\nErro(s) lexicos encontrados ");
         }
         this.messageTextArea.appendText("\n--------------------------");
     }
@@ -374,52 +358,13 @@ public class Controller {
         List<AIntermediateCode> AIntermediateCodeList = LanguageParser.analisadorSemantico(codigo);
         updateAIntermediateCodeTable(AIntermediateCodeList);
     }
-    
+
     private void updateAIntermediateCodeTable(List<AIntermediateCode> AIntermediateCodeList) {
         AIntermediateCodeTable.getItems().setAll(AIntermediateCodeList);
     }
-    
+
     public void clearAIntermediateCodeTable() {
         AIntermediateCodeTable.getItems().clear();
-    }
-    
-    private String getExpectedMessages(String[] expectedTokens) {
-        StringBuilder messages = new StringBuilder();
-        for (String token : expectedTokens) {
-            switch (token) {
-                case "<MAKE>":
-                    messages.append("Esperado Make\n");
-                    break;
-                case "<CONST>":
-                case "<VAR>":
-                    messages.append("Esperado uma declaração de variaveis ou constantes\n");
-                    break;
-                case "<END>":
-                    messages.append("Esperado end\n");
-                    break;
-                case "<PONTO>":
-                    messages.append("Esperado .\n");
-                    break;
-                case "<IDENTIFICADOR>":
-                case "<CONSTANTE_INTEIRA>":
-                case "<CONSTANTE_REAL>":
-                case "<CONSTANTE_LITERAL>":
-                case "<TRUE>":
-                case "<FALSE>":
-                    messages.append("Esperado expressao\n");
-                    break;
-                case "<GET>":
-                case "<PUT>":
-                case "<IF>":
-                case "<WHILE>":
-                    messages.append("Esperado lista de comandos\n");
-                    break;
-                default:
-                    messages.append("Esperado ").append(token).append("\n");
-                    break;
-            }
-        }
-        return messages.toString();
     }
 
     public String copySelection() {

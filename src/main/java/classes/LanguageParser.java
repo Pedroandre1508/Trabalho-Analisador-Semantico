@@ -9,26 +9,59 @@ import java.io.ByteArrayInputStream;
 import util.OutputData;
 
 public class LanguageParser implements LanguageParserConstants {
-  private int contParseError = 0;
-    private boolean debugRecovery = true;
+    private int contParseError = 0;
     private final static List<AErrorStruct> output = new ArrayList<AErrorStruct>();
     private boolean eof;
 
-    public static List<Token> getTokens(String stream) {
-        InputStream target = new ByteArrayInputStream(stream.getBytes());
-        LanguageParser parser = new LanguageParser(target);
-        return tokenize(parser);
+    public static void main(String[] args) throws TokenMgrError, ParseException {
+      LanguageParser parser;
+      if (args.length == 0) {
+          parser = new LanguageParser(System.in);
+      } else if (args.length == 1) {
+          try {
+              parser = new LanguageParser(new java.io.FileInputStream(args[0]));
+          } catch (java.io.FileNotFoundException e) {
+              System.out.println("LanguageParser: file " + args[0] + " was not found.");
+              return;
+          }
+      }
+    }
+    public static LanguageParser create(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      return new LanguageParser(target);
     }
 
-    // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
-    public static List<AIntermediateCode> analisadorSemantico(String input) {
-        List<AIntermediateCode> intermediateCodeList = new ArrayList<>();
-        // Lógica para análise semântica e geração de código intermediário
-        // Exemplo de adição de código intermediário:
-        intermediateCodeList.add(new AIntermediateCode("Instrução 1", "Operando 1", "Operando 2"));
-        intermediateCodeList.add(new AIntermediateCode("Instrução 2", "Operando 3", "Operando 4"));
-        intermediateCodeList.add(new AIntermediateCode("Instrução 3", "Operando 5", "Operando 6"));
-        return intermediateCodeList;
+    public static List<Token> tokenize(LanguageParser parser) {
+        List<Token> tokens = new ArrayList<Token>();
+        Token token = parser.getNextToken();
+
+        while (token.kind != LanguageParserConstants.EOF) {
+            tokens.add(token);
+            token = parser.getNextToken();
+        }
+
+        if (!ATokenHandler.isClosed()) {
+            tokens.add(ATokenHandler.createToken());
+        }
+        return tokens;
+    }
+    public void consumeUntil(ARecoverySet g, ParseException e, String met) throws ParseException {
+      Token tok;
+      if (g == null) {
+          throw e;
+      }
+      tok = getToken(1);
+      while (!eof) {
+          if (g.contains(tok.kind)) {
+              break;
+          }
+          getNextToken();
+          tok = getToken(1);
+          if (tok.kind == EOF && !g.contains(EOF)) {
+              eof = true;
+          }
+      }
+      contParseError++;
     }
 
     public static ArrayList<AErrorStruct> analisadorSintatico(String input) {
@@ -53,83 +86,22 @@ public class LanguageParser implements LanguageParserConstants {
         return output;
     }
 
-    private void captureAllErrors(ArrayList<AErrorStruct> output) {
-        while (true) {
-            Token token = getNextToken();
-            // Implementação do método captureAllErrors
-            if (token.kind == LanguageParserConstants.EOF) {
-                break;
-            }
-            if (token.kind == LanguageParserConstants.SIMBOLO_INVALIDO || token.kind == LanguageParserConstants.CONSTANTE_INTEIRA_INVALIDA
-                    || token.kind == LanguageParserConstants.CONSTANTE_REAL_INVALIDA || token.kind == LanguageParserConstants.CONSTANTE_LITERAL_INVALIDA || token.kind == LanguageParserConstants.IDENTIFICADOR_INVALIDO) {
-                AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", token);
-                errorStruct.setExpected(new int[][]{{token.kind}}, LanguageParserConstants.tokenImage);
-                output.add(errorStruct);
-                advanceAfterError(); // Avance no fluxo de entrada após encontrar um erro
-            }
-        }
+    // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
+    public static List<AIntermediateCode> analisadorSemantico(String input) {
+      List<AIntermediateCode> intermediateCodeList = new ArrayList<>();
+      // Lógica para análise semântica e geração de código intermediário
+      // Exemplo de adição de código intermediário:
+      intermediateCodeList.add(new AIntermediateCode("Instrução 1", "Operando 1", "Operando 2"));
+      intermediateCodeList.add(new AIntermediateCode("Instrução 2", "Operando 3", "Operando 4"));
+      intermediateCodeList.add(new AIntermediateCode("Instrução 3", "Operando 5", "Operando 6"));
+      return intermediateCodeList;
     }
 
-    private void advanceAfterError() {
-        int maxAttempts = 100; // Limite de tentativas para evitar loop infinito
-        int attempts = 0;
 
-        while (attempts < maxAttempts) {
-            try {
-                Token token = getNextToken();
-                System.out.println("Consumed token: " + token); // Adicione esta linha para depuração
-                if (token.kind == LanguageParserConstants.EOF || isSafePoint(token)) {
-                    break;
-                }
-            } catch (Exception e) {
-                break;
-            }
-            attempts++;
-        }
-
-        if (attempts >= maxAttempts) {
-            System.err.println("Erro: Limite de tentativas atingido ao tentar avançar após erro.");
-        }
-    }
-
-    private boolean isSafePoint(Token token) {
-        return token.kind == LanguageParserConstants.PONTOVIRGULA || token.kind == LanguageParserConstants.FECHA_PARENTESES
-            || token.kind == LanguageParserConstants.EOF || token.kind == LanguageParserConstants.END
-            || token.kind == LanguageParserConstants.PONTO || token.kind == LanguageParserConstants.DOISPONTOS;
-    }
-
-    public static LanguageParser create(String stream) {
-        InputStream target = new ByteArrayInputStream(stream.getBytes());
-        return new LanguageParser(target);
-    }
-
-    public static void main(String[] args) throws TokenMgrError, ParseException {
-        LanguageParser parser;
-        if (args.length == 0) {
-            parser = new LanguageParser(System.in);
-        } else if (args.length == 1) {
-            try {
-                parser = new LanguageParser(new java.io.FileInputStream(args[0]));
-            } catch (java.io.FileNotFoundException e) {
-                System.out.println("LanguageParser: file " + args[0] + " was not found.");
-                return;
-            }
-        }
-    }
-
-    public static List<Token> tokenize(LanguageParser parser) {
-        List<Token> tokens = new ArrayList<Token>();
-        Token token = parser.getNextToken();
-
-        while (token.kind != LanguageParserConstants.EOF) {
-            tokens.add(token);
-            token = parser.getNextToken();
-        }
-
-        if (!ATokenHandler.isClosed()) {
-            tokens.add(ATokenHandler.createToken());
-        }
-        return tokens;
+    public static List<Token> getTokens(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      LanguageParser parser = new LanguageParser(target);
+      return tokenize(parser);
     }
 
     static public String im(int x) {
@@ -141,25 +113,6 @@ public class LanguageParser implements LanguageParserConstants {
             // Handle exception or log if necessary
         }
         return s;
-    }
-
-    public void consumeUntil(ARecoverySet g, ParseException e, String met) throws ParseException {
-        Token tok;
-        if (g == null) {
-            throw e;
-        }
-        tok = getToken(1);
-        while (!eof) {
-            if (g.contains(tok.kind)) {
-                break;
-            }
-            getNextToken();
-            tok = getToken(1);
-            if (tok.kind == EOF && !g.contains(EOF)) {
-                eof = true;
-            }
-        }
-        contParseError++;
     }
  
 //Analisador Sintatico
