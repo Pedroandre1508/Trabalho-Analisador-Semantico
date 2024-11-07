@@ -86,7 +86,10 @@ public class LanguageParser implements LanguageParserConstants {
             AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", e);
             errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
             output.add(errorStruct);
-            System.err.println("Erro sint\u00e1tico: " + e.getMessage()); // Exibe o erro no terminal
+            System.err.println("Erro sintático: " + e.getMessage());
+            System.err.println("Linha: " + e.currentToken.next.beginLine + ", Coluna: " + e.currentToken.next.beginColumn);
+        System.err.println("Esperado: " + getExpectedTokens(e.expectedTokenSequences, e.tokenImage));
+
         }
 
         if (hasErrors) {
@@ -94,6 +97,18 @@ public class LanguageParser implements LanguageParserConstants {
         }
 
         return output;
+    }
+
+    // Método auxiliar para obter os tokens esperados como uma string
+    private static String getExpectedTokens(int[][] expectedTokenSequences, String[] tokenImage) {
+      StringBuilder expected = new StringBuilder();
+      for (int[] sequence : expectedTokenSequences) {
+          for (int token : sequence) {
+              expected.append(tokenImage[token]).append(" ");
+          }
+          expected.append("\n");
+      }
+      return expected.toString();
     }
 
     public static List<AIntermediateCode> analisadorSemantico(String input) {
