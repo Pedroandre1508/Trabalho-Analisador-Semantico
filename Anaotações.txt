@@ -1,0 +1,24 @@
+
+tenta ler a declaração de variavel ou constante como lista de comandos, acredito que não esta caindo no 
+
+make programa
+
+const int: a = 10. real: b = 20. end;
+var int: x, y. real: z. end;
+put(x, y, z).
+end.
+
+------------------------
+Nesta entrada, o programa compila com sucesso, porque ele faz toda a analise da declaração de constante e parte para a lista de comandos, que identifica todo o resto corretamente e finaliza o programa certo.
+
+make programa
+
+const int: a = 10. real: b = 20. end;
+put(x, y, z).
+end.
+
+
+
+---------------
+
+

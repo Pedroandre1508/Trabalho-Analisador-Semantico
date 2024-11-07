@@ -86,11 +86,11 @@ public class LanguageParser implements LanguageParserConstants {
             AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", e);
             errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
             output.add(errorStruct);
-            System.err.println("Erro sintático: " + e.getMessage()); // Exibe o erro no terminal
+            System.err.println("Erro sint\u00e1tico: " + e.getMessage()); // Exibe o erro no terminal
         }
 
         if (hasErrors) {
-            System.err.println("Erro(s) sintáticos encontrados.");
+            System.err.println("Erro(s) sint\u00e1ticos encontrados.");
         }
 
         return output;
@@ -102,9 +102,9 @@ public class LanguageParser implements LanguageParserConstants {
       //logica
 
       // Exemplo de adição de código intermediário:
-      intermediateCodeList.add(new AIntermediateCode("Instrução 1", "Operando 1", "Operando 2"));
-      intermediateCodeList.add(new AIntermediateCode("Instrução 2", "Operando 3", "Operando 4"));
-      intermediateCodeList.add(new AIntermediateCode("Instrução 3", "Operando 5", "Operando 6"));
+      intermediateCodeList.add(new AIntermediateCode("Instru\u00e7\u00e3o 1", "Operando 1", "Operando 2"));
+      intermediateCodeList.add(new AIntermediateCode("Instru\u00e7\u00e3o 2", "Operando 3", "Operando 4"));
+      intermediateCodeList.add(new AIntermediateCode("Instru\u00e7\u00e3o 3", "Operando 5", "Operando 6"));
       return intermediateCodeList;
     }
 
@@ -125,7 +125,7 @@ public class LanguageParser implements LanguageParserConstants {
         }
         return s;
     }
- 
+
 //Analisador Sintatico
 // Produções
   final public void programa() throws ParseException {

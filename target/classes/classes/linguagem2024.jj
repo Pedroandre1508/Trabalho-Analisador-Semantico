@@ -17,76 +17,53 @@ import java.io.ByteArrayInputStream;
 import util.OutputData;
 
 public class LanguageParser {
-     private int contParseError = 0;
-  private boolean debugRecovery = true;
-  private final static List<ErrorStruct> output = new ArrayList<ErrorStruct>();
-  private boolean eof;
+    private int contParseError = 0;
+    private final static List<AErrorStruct> output = new ArrayList<AErrorStruct>();
+    private boolean eof;
 
-  public static List<Token> getTokens(String stream) {
-      InputStream target = new ByteArrayInputStream(stream.getBytes());
-      LanguageParser parser = new LanguageParser(target);
-      return tokenize(parser);
-  }
+    private Acoes acoesSemanticas = new Acoes();
 
-  public static ArrayList<ErrorStruct> analisadorSintatico(String stream) {
-      InputStream target = new ByteArrayInputStream(stream.getBytes());
-      LanguageParser parser = new LanguageParser(target);
-      try {
-          parser.programa();
-      } catch (ParseException e) {
-          output.add(new ErrorStruct("Error parsing the program.\n", e));
+
+    int VT = 0, VP = 0,ponteiro = 0;
+    String contexto;
+    ArrayList<Integer> tipo = new ArrayList<>();
+    ArrayList<String> pilhaDesvios = new ArrayList<>();
+    ArrayList<String> areaInstrucoes = new ArrayList<>();
+    ArrayList<String> tabelaSimbolos = new ArrayList<>();
+
+    public static void main(String[] args) throws TokenMgrError, ParseException {
+      LanguageParser parser;
+      if (args.length == 0) {
+          parser = new LanguageParser(System.in);
+      } else if (args.length == 1) {
+          try {
+              parser = new LanguageParser(new java.io.FileInputStream(args[0]));
+          } catch (java.io.FileNotFoundException e) {
+              System.out.println("LanguageParser: file " + args[0] + " was not found.");
+              return;
+          }
       }
-      ArrayList<ErrorStruct> tmp = new ArrayList<ErrorStruct>(output);
-      output.clear();
-      return tmp;
-  }
-
-  public static LanguageParser create(String stream) {
+    }
+    public static LanguageParser create(String stream) {
       InputStream target = new ByteArrayInputStream(stream.getBytes());
       return new LanguageParser(target);
-  }
-
-  public static void main(String[] args) throws TokenMgrError, ParseException {
-    LanguageParser parser;
-    if (args.length == 0) {
-        parser = new LanguageParser(System.in);
-    } else if (args.length == 1) {
-        try {
-            parser = new LanguageParser(new java.io.FileInputStream(args[0]));
-        } catch (java.io.FileNotFoundException e) {
-            System.out.println("LanguageParser: file " + args[0] + " was not found.");
-            return;
-        }
     }
-}
 
-  public static List<Token> tokenize(LanguageParser parser) {
-      List<Token> tokens = new ArrayList<Token>();
-      Token token = parser.getNextToken();
+    public static List<Token> tokenize(LanguageParser parser) {
+        List<Token> tokens = new ArrayList<Token>();
+        Token token = parser.getNextToken();
 
-      while (token.kind != LanguageParserConstants.EOF) {
-          tokens.add(token);
-          token = parser.getNextToken();
-      }
+        while (token.kind != LanguageParserConstants.EOF) {
+            tokens.add(token);
+            token = parser.getNextToken();
+        }
 
-      if (!TokenHandler.isClosed()) {
-          tokens.add(TokenHandler.createToken());
-      }
-      return tokens;
-  }
-
-  static public String im(int x) {
-      String s = tokenImage[x];
-      int k = s.lastIndexOf("\"");
-      try {
-          s = s.substring(1, k);
-      } catch (StringIndexOutOfBoundsException e) {
-          // Handle exception or log if necessary
-      }
-      return s;
-  }
-
-  public void consumeUntil(RecoverySet g, ParseException e, String met) throws ParseException {
+        if (!ATokenHandler.isClosed()) {
+            tokens.add(ATokenHandler.createToken());
+        }
+        return tokens;
+    }
+    public void consumeUntil(ARecoverySet g, ParseException e, String met) throws ParseException {
       Token tok;
       if (g == null) {
           throw e;
@@ -103,15 +80,59 @@ public class LanguageParser {
           }
       }
       contParseError++;
-  }
+    }
 
-  // Método para chamar o analisador semântico e retornar a lista de códigos intermediários
-  public static List<IntermediateCode> analisadorSemantico(String input) {
-      List<IntermediateCode> intermediateCodeList = new ArrayList<>();
-      // Lógica para análise semântica e geração de código intermediário
-      // Adicione os códigos intermediários gerados à lista intermediateCodeList
+    public static ArrayList<AErrorStruct> analisadorSintatico(String input) {
+        ArrayList<AErrorStruct> output = new ArrayList<>();
+        LanguageParser parser = create(input);
+        boolean hasErrors = false;
+
+        try {
+            parser.programa();
+        } catch (ParseException e) {
+            hasErrors = true;
+            AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", e);
+            errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
+            output.add(errorStruct);
+            System.err.println("Erro sintático: " + e.getMessage()); // Exibe o erro no terminal
+        }
+
+        if (hasErrors) {
+            System.err.println("Erro(s) sintáticos encontrados.");
+        }
+
+        return output;
+    }
+
+    public static List<AIntermediateCode> analisadorSemantico(String input) {
+      List<AIntermediateCode> intermediateCodeList = new ArrayList<>();
+
+      //logica
+
+      // Exemplo de adição de código intermediário:
+      intermediateCodeList.add(new AIntermediateCode("Instrução 1", "Operando 1", "Operando 2"));
+      intermediateCodeList.add(new AIntermediateCode("Instrução 2", "Operando 3", "Operando 4"));
+      intermediateCodeList.add(new AIntermediateCode("Instrução 3", "Operando 5", "Operando 6"));
       return intermediateCodeList;
-  }
+    }
+
+
+    public static List<Token> getTokens(String stream) {
+      InputStream target = new ByteArrayInputStream(stream.getBytes());
+      LanguageParser parser = new LanguageParser(target);
+      return tokenize(parser);
+    }
+
+    static public String im(int x) {
+        String s = tokenImage[x];
+        int k = s.lastIndexOf("\"");
+        try {
+            s = s.substring(1, k);
+        } catch (StringIndexOutOfBoundsException e) {
+            // Handle exception or log if necessary
+        }
+        return s;
+    }
 }
 
 PARSER_END(LanguageParser)

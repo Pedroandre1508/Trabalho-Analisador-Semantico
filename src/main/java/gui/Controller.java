@@ -337,18 +337,18 @@ public class Controller {
         }
         if (counter == 0) {
             this.messageTextArea.appendText("\nNão há erro(s) lexicos ");
+            this.messageTextArea.appendText("\n--------------------------");
         }
         else{
             System.err.println("Erro léxico: ");
             this.messageTextArea.appendText("\nErro(s) lexicos encontrados ");
         }
-        this.messageTextArea.appendText("\n--------------------------");
     }
 
     private void analisadorSintatico() {
         ArrayList<AErrorStruct> output = LanguageParser.analisadorSintatico(this.inputTextArea.getText());
         if (output.size() == 0) {
-            this.messageTextArea.appendText("\nCompilado com sucesso!\n");
+            this.messageTextArea.appendText("\nNão há erro(s) Sintatico\n");
         } else {
             this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
         }
