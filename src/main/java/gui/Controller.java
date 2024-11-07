@@ -17,6 +17,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,17 +49,17 @@ public class Controller {
     @FXML
     private TableView<AIntermediateCode> AIntermediateCodeTable;
     @FXML
-    private TableColumn<AIntermediateCode, String> column1;
+    private TableColumn<AIntermediateCode, String> col1;
     @FXML
-    private TableColumn<AIntermediateCode, String> column2;
+    private TableColumn<AIntermediateCode, String> col2;
     @FXML
-    private TableColumn<AIntermediateCode, String> column3;
+    private TableColumn<AIntermediateCode, String> col3;
 
     @FXML
     public void initialize() {
-        column1.setCellValueFactory(cellData -> cellData.getValue().col1Property());
-        column2.setCellValueFactory(cellData -> cellData.getValue().col2Property());
-        column3.setCellValueFactory(cellData -> cellData.getValue().col3Property());
+        col1.setCellValueFactory(cellData -> cellData.getValue().col1Property());
+        col2.setCellValueFactory(cellData -> cellData.getValue().col2Property());
+        col3.setCellValueFactory(cellData -> cellData.getValue().col3Property());
     }
 
     @FXML
@@ -297,18 +298,27 @@ public class Controller {
         if (this.inputTextArea.getText().length() == 0) {
             return;
         }
-    
+
         // Realiza a análise léxica
         analisadorLexico();
-    
+
         // Verifica se há erros léxicos
         if (hasLexicalErrors()) {
             return;
         }
-    
-        // Realiza a análise sintática e exibe os resultados
+
+        // Realiza a análise sintática
         analisadorSintatico();
-        analisarSemantica(this.inputTextArea.getText());
+
+        if (!hasSyntaxErrors()) {
+            // Realiza a análise semântica
+            analisarSemantica(this.inputTextArea.getText());
+        }
+    }
+
+    private boolean hasSyntaxErrors() {
+        String messageContent = this.messageTextArea.getText();
+        return messageContent.contains("Erro(s) sintaticos encontrados.");
     }
 
     private boolean hasLexicalErrors() {
@@ -355,33 +365,22 @@ public class Controller {
         ArrayList<AErrorStruct> output = LanguageParser.analisadorSintatico(this.inputTextArea.getText());
         if (output.size() == 0) {
             this.messageTextArea.appendText("\nCompilado com sucesso!\n");
-            return;
-        }
-        this.messageTextArea.appendText("\n");
-        this.messageTextArea.appendText("Erro(s) sintaticos encontrados: " + output.size() + "\n");
-        for (AErrorStruct err : output) {
-            this.messageTextArea.appendText(err.getMsg() + "\n");
-            this.messageTextArea.appendText("Esperado(s): " + err.expected() + "\n");
-            if (err.getError() != null) {
-                this.messageTextArea.appendText("Linha: " + err.getError().currentToken.beginLine + "; Coluna: " + err.getError().currentToken.endColumn + "\n");
-            } else if (err.getLexicalError() != null) {
-                this.messageTextArea.appendText("Linha: " + err.getLexicalError().beginLine + "; Coluna: " + err.getLexicalError().endColumn + "\n");
-            }
+        } else {
+            this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
         }
     }
 
-    // Método para chamar o analisador semântico e atualizar a tabela
     private void analisarSemantica(String codigo) {
         List<AIntermediateCode> AIntermediateCodeList = LanguageParser.analisadorSemantico(codigo);
         updateAIntermediateCodeTable(AIntermediateCodeList);
     }
-
+    
     private void updateAIntermediateCodeTable(List<AIntermediateCode> AIntermediateCodeList) {
         AIntermediateCodeTable.getItems().setAll(AIntermediateCodeList);
     }
     
-    private String getExpectedMessages(String expectedToken) {
-        return getExpectedMessages(new String[]{expectedToken});
+    public void clearAIntermediateCodeTable() {
+        AIntermediateCodeTable.getItems().clear();
     }
     
     private String getExpectedMessages(String[] expectedTokens) {
