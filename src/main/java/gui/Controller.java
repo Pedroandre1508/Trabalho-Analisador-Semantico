@@ -317,7 +317,6 @@ public class Controller {
     }
 
     private boolean hasLexicalErrors() {
-        // Verifique se há erros léxicos na área de mensagens
         String messageContent = this.messageTextArea.getText();
         return messageContent.contains("Erro(s) lexicos encontrados ");
     }
@@ -357,12 +356,23 @@ public class Controller {
     private void analisarSemantica(String codigo) {
         List<AIntermediateCode> AIntermediateCodeList = LanguageParser.analisadorSemantico(codigo);
         updateAIntermediateCodeTable(AIntermediateCodeList);
+
+        //Anotações de como pode ser a mensagem em tela
+        // if (AIntermediateCodeList.size() == 0) {
+        //     this.messageTextArea.appendText("\nNão há erro(s) Semantico\n");
+            
+        // } else {
+        //     this.messageTextArea.appendText("\nErro(s) Semantico encontrados.\n");
+        // }
+        
     }
 
+    //atualiza a tabela de códigos intermediários
     private void updateAIntermediateCodeTable(List<AIntermediateCode> AIntermediateCodeList) {
         AIntermediateCodeTable.getItems().setAll(AIntermediateCodeList);
     }
 
+    //limpa a tabela de códigos intermediários
     public void clearAIntermediateCodeTable() {
         AIntermediateCodeTable.getItems().clear();
     }
