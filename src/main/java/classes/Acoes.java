@@ -11,22 +11,22 @@ public class Acoes {
     ArrayList<String> tabelaSimbolos = new ArrayList<>();
 
     // Ação #1: reconhecimento de fim de programa
-    public void fimPrograma() {
+    public void acao1() {
         gerarInstrucao(ponteiro, "STP", 0);
     }
 
     // Ação #2: reconhecimento do identificador de programa
-    public void identificadorPrograma(String identificador) {
+    public void acao2(String identificador) {
         tabelaSimbolos.add(identificador + ", 0, -");
     }
 
     // Ação #3: reconhecimento da palavra reservada const
-    public void reconhecerConst() {
+    public void acao3() {
         contexto = "constante";
     }
 
     // Ação #4: reconhecimento do término da declaração de constantes e/ou variáveis de um determinado tipo
-    public void terminoDeclaracao() {
+    public void acao4() {
         switch (tipo) {
             case 1:
             case 5:
@@ -51,7 +51,7 @@ public class Acoes {
     }
 
     // Ação #5: reconhecimento de valor na declaração de constante
-    public void valorDeclaracaoConstante(int valor) {
+    public void acao5(int valor) {
         switch (tipo) {
             case 5:
                 gerarInstrucao(ponteiro, "LDI", valor);
@@ -70,12 +70,12 @@ public class Acoes {
     }
 
     // Ação #6: reconhecimento da palavra reservada var
-    public void reconhecerVar() {
+    public void acao6() {
         contexto = "variavel";
     }
 
     // Ação #7: reconhecimento da palavra reservada int
-    public void reconhecerInt() {
+    public void acao7() {
         if (contexto.equals("variavel")) {
             tipo = 1;
         } else {
@@ -84,7 +84,7 @@ public class Acoes {
     }
 
     // Ação #8: reconhecimento da palavra reservada real
-    public void reconhecerReal() {
+    public void acao8() {
         if (contexto.equals("variavel")) {
             tipo = 2;
         } else {
@@ -93,7 +93,7 @@ public class Acoes {
     }
 
     // Ação #9: reconhecimento da palavra reservada char
-    public void reconhecerChar() {
+    public void acao9() {
         if (contexto.equals("variavel")) {
             tipo = 3;
         } else {
@@ -102,7 +102,7 @@ public class Acoes {
     }
 
     // Ação #10: reconhecimento da palavra reservada bool
-    public void reconhecerBool() {
+    public void acao10() {
         if (contexto.equals("variavel")) {
             tipo = 4;
         } else {
@@ -111,7 +111,8 @@ public class Acoes {
     }
 
     // Ação #11: reconhecimento de identificador
-    public void reconhecerIdentificador(String identificador) {
+    //validar novamente
+    public void acao11(String identificador) {
         switch (contexto) {
             case "constante":
             case "variavel":
@@ -140,7 +141,8 @@ public class Acoes {
     }
 
     // Ação #12: reconhecimento de identificador em comando de atribuição
-    public void reconhecerIdentificadorAtribuicao(String identificador) {
+    //validar novamente
+    public void acao12(String identificador) {
         if (tabelaSimbolos.contains(identificador)) {
             // Recuperar atributo do identificador
             String atributo = "atributo"; // Exemplo, deve ser recuperado da tabela de símbolos
@@ -152,18 +154,19 @@ public class Acoes {
     }
 
     // Ação #13: reconhecimento da palavra reservada get
-    public void reconhecerGet() {
+    public void acao13() {
         contexto = "entrada dados";
     }
 
     // Ação #14: reconhecimento de mensagem em comando de saída de dados
-    public void reconhecerMensagemSaida() {
+    public void acao14() {
         gerarInstrucao(ponteiro, "WRT", 0);
         ponteiro++;
     }
 
     // Ação #15: reconhecimento de identificador em comando de saída ou em expressão
-    public void reconhecerIdentificadorSaida(String identificador) {
+    //validar novamente
+    public void acao15(String identificador) {
         if (tabelaSimbolos.contains(identificador)) {
             // Recuperar atributo do identificador
             String atributo = "atributo"; // Exemplo, deve ser recuperado da tabela de símbolos
@@ -175,51 +178,53 @@ public class Acoes {
     }
 
     // Ação #16: reconhecimento de constante inteira em comando de saída ou em expressão
-    public void reconhecerConstanteInteira(int constante) {
+    public void acao16(int constante) {
         gerarInstrucao(ponteiro, "LDI", constante);
         ponteiro++;
     }
 
     // Ação #17: reconhecimento de constante real em comando de saída ou em expressão
-    public void reconhecerConstanteReal(double constante) {
+    public void acao17(double constante) {
         gerarInstrucao(ponteiro, "LDR", constante);
         ponteiro++;
     }
 
     // Ação #18: reconhecimento de constante literal em comando de saída ou em expressão
-    public void reconhecerConstanteLiteral(String constante) {
+    public void acao18(String constante) {
         gerarInstrucao(ponteiro, "LDS", constante);
         ponteiro++;
     }
 
     // Ação #19: reconhecimento de constante lógica verdadeiro
-    public void reconhecerConstanteLogicaVerdadeiro() {
+    public void acao19() {
         gerarInstrucao(ponteiro, "LDB", "TRUE");
         ponteiro++;
     }
 
     // Ação #20: reconhecimento de constante lógica falso
-    public void reconhecerConstanteLogicaFalso() {
+    public void acao20() {
         gerarInstrucao(ponteiro, "LDB", "FALSE");
         ponteiro++;
     }
 
     // Ação #21: reconhecimento de expressão em comando de seleção
-    public void reconhecerExpressaoSelecao() {
+    public void acao21() {
         gerarInstrucao(ponteiro, "JMF", "?");
         ponteiro++;
         pilhaDesvios.add(ponteiro - 1);
     }
 
     // Ação #22: reconhecimento do fim de comando de seleção
-    public void fimComandoSelecao() {
+    //validar novamente
+    public void acao22() {
         int endereco = pilhaDesvios.remove(pilhaDesvios.size() - 1);
         // Atualizar a instrução de desvio com o endereço atual
         // Exemplo: areaInstrucoes.set(endereco, "JMF " + ponteiro);
     }
 
     // Ação #23: reconhecimento da cláusula senão em comando de seleção
-    public void reconhecerClausulaSenao() {
+    //validar novamente
+    public void acao23() {
         int endereco = pilhaDesvios.remove(pilhaDesvios.size() - 1);
         // Atualizar a instrução de desvio com o endereço atual
         // Exemplo: areaInstrucoes.set(endereco, "JMF " + (ponteiro + 1));
@@ -229,19 +234,20 @@ public class Acoes {
     }
 
     // Ação #24: reconhecimento da palavra reservada while
-    public void reconhecerWhile() {
+    public void acao24() {
         pilhaDesvios.add(ponteiro);
     }
 
     // Ação #25: reconhecimento de expressão em comando de repetição
-    public void reconhecerExpressaoRepeticao() {
+    public void acao25() {
         gerarInstrucao(ponteiro, "JMF", "?");
         ponteiro++;
         pilhaDesvios.add(ponteiro - 1);
     }
 
     // Ação #26: reconhecimento do fim do comando de repetição
-    public void fimComandoRepeticao() {
+    //validar novamente
+    public void acao26() {
         int enderecoJMF = pilhaDesvios.remove(pilhaDesvios.size() - 1);
         // Atualizar a instrução de desvio com o endereço atual
         // Exemplo: areaInstrucoes.set(enderecoJMF, "JMF " + (ponteiro + 1));
@@ -251,67 +257,97 @@ public class Acoes {
     }
 
     // Ação #27: reconhecimento de operação relacional igual
-    public void reconhecerOperacaoRelacionalIgual() {
+    public void acao27() {
         gerarInstrucao(ponteiro, "EQL", 0);
         ponteiro++;
     }
 
     // Ação #28: reconhecimento de operação relacional diferente
-    public void reconhecerOperacaoRelacionalDiferente() {
+    public void acao28() {
         gerarInstrucao(ponteiro, "DIF", 0);
         ponteiro++;
     }
 
     // Ação #29: reconhecimento de operação relacional menor
-    public void reconhecerOperacaoRelacionalMenor() {
+    public void acao29() {
         gerarInstrucao(ponteiro, "SMR", 0);
         ponteiro++;
     }
 
     // Ação #30: reconhecimento de operação relacional maior
-    public void reconhecerOperacaoRelacionalMaior() {
+    public void acao30() {
         gerarInstrucao(ponteiro, "BGR", 0);
         ponteiro++;
     }
 
+    // Ação #31: reconhecimento de operação relacional maior
+    //validar novamente
+    public void acao31() {
+    }
+
+
+    // Ação #32: reconhecimento de operação relacional maior
+    //validar novamente
+    public void acao32() {
+     
+    }
+
     // Ação #33: reconhecimento de operação aritmética adição
-    public void reconhecerOperacaoAritmeticaAdicao() {
+    public void acao33() {
         gerarInstrucao(ponteiro, "ADD", 0);
         ponteiro++;
     }
 
     // Ação #34: reconhecimento de operação aritmética subtração
-    public void reconhecerOperacaoAritmeticaSubtracao() {
+    public void acao34() {
         gerarInstrucao(ponteiro, "SUB", 0);
         ponteiro++;
     }
 
     // Ação #35: reconhecimento de operação lógica OU
-    public void reconhecerOperacaoLogicaOU() {
+    public void acao35() {
         gerarInstrucao(ponteiro, "OR", 0);
         ponteiro++;
     }
 
     // Ação #36: reconhecimento de operação aritmética multiplicação
-    public void reconhecerOperacaoAritmeticaMultiplicacao() {
+    public void acao36() {
         gerarInstrucao(ponteiro, "MUL", 0);
         ponteiro++;
     }
 
     // Ação #37: reconhecimento de operação aritmética divisão real
-    public void reconhecerOperacaoAritmeticaDivisaoReal() {
+    public void acao37() {
         gerarInstrucao(ponteiro, "DIV", 0);
         ponteiro++;
     }
 
+    // Ação #38: reconhecimento de operação relacional maior
+    //validar novamente
+    public void acao38() {
+     
+    }
+
+    // Ação #39: reconhecimento de operação relacional maior
+    //validar novamente
+    public void acao39() {
+     
+    }
+
     // Ação #40: reconhecimento de operação lógica E
-    public void reconhecerOperacaoLogicaE() {
+    public void acao40() {
         gerarInstrucao(ponteiro, "AND", 0);
         ponteiro++;
     }
 
+    // Ação #41: reconhecimento de operação relacional maior
+    //validar novamente
+    public void acao41() {
+     
+    }
+
     // Ação #42: reconhecimento de operação lógica NÃO
-    public void reconhecerOperacaoLogicaNAO() {
+    public void acao42() {
         gerarInstrucao(ponteiro, "NOT", 0);
         ponteiro++;
     }
