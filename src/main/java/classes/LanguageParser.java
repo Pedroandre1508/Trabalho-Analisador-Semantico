@@ -1,10 +1,9 @@
 package classes;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.io.InputStream;
 import java.io.ByteArrayInputStream;
-import util.OutputData;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LanguageParser implements LanguageParserConstants {
   private int contParseError = 0;
@@ -295,11 +294,17 @@ public class LanguageParser implements LanguageParserConstants {
   // Ação #12: reconhecimento de identificador em comando de atribuição
   public void acao12(String identificador) throws SemanticException {
     if (tabelaSimbolos.contains(identificador)) {
-      Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
-      gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
-      ponteiro++;
+        Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
+        
+        // Verificar se o identificador é um identificador de variável
+        if (simbolo.getCategoria() >= 1 && simbolo.getCategoria() <= 4) { // Tipos 1 a 4 são variáveis
+            gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
+            ponteiro++;
+        } else {
+            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa ou de constante"));
+        }
     } else {
-    semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
+        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
     }
   }
 
@@ -317,11 +322,17 @@ public class LanguageParser implements LanguageParserConstants {
   // Ação #15: reconhecimento de identificador em comando de saída ou em expressão
   public void acao15(String identificador) throws SemanticException {
     if (tabelaSimbolos.contains(identificador)) {
-      Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
-      gerarInstrucao(ponteiro, "LDV", simbolo.getAtributo());
-      ponteiro++;
+        Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
+        
+        // Verificar se o identificador é uma constante ou uma variável
+        if ((simbolo.getCategoria() >= 1 && simbolo.getCategoria() <= 4) || (simbolo.getCategoria() >= 5 && simbolo.getCategoria() <= 7)) {
+            gerarInstrucao(ponteiro, "LDV", simbolo.getAtributo());
+            ponteiro++;
+        } else {
+            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa"));
+        }
     } else {
-      semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
+        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
     }
   }
 
@@ -367,18 +378,26 @@ public class LanguageParser implements LanguageParserConstants {
 
   // Ação #22: reconhecimento do fim de comando de seleção
   public void acao22() {
+    // Desempilhar da pilha de desvios o endereço da instrução JMP (ou JMF) empilhado na ação #23 (ou ação #21)
     int endereco = pilhaDesvios.remove(pilhaDesvios.size() - 1);
-    // Atualizar a instrução de desvio com o endereço atual
-    // Exemplo: tabelaInstrucoes.set(endereco, "JMF " + ponteiro);
+
+    // Atualizar a instrução de desvio com: endereço  ponteiro
+    tabelaInstrucoes.set(endereco, new Instrucao(endereco, "JMP", ponteiro));
   }
 
   // Ação #23: reconhecimento da cláusula senão em comando de seleção
   public void acao23() {
+    // Desempilhar da pilha de desvios o endereço da instrução JMF empilhado na ação #21
     int endereco = pilhaDesvios.remove(pilhaDesvios.size() - 1);
-    // Atualizar a instrução de desvio com o endereço atual
-    // Exemplo: tabelaInstrucoes.set(endereco, "JMF " + (ponteiro + 1));
+
+    // Atualizar a instrução de desvio com: endereço  ponteiro + 1
+    tabelaInstrucoes.set(endereco, new Instrucao(endereco, "JMF", ponteiro + 1));
+
+    // Gerar instrução: (ponteiro, JMP, ?), onde endereço = ?
     gerarInstrucao(ponteiro, "JMP", "?");
     ponteiro++;
+
+    // Empilhar (ponteiro - 1) em pilha de desvios, ou seja, o endereço da instrução JMP
     pilhaDesvios.add(ponteiro - 1);
   }
 
@@ -396,10 +415,16 @@ public class LanguageParser implements LanguageParserConstants {
 
   // Ação #26: reconhecimento do fim do comando de repetição
   public void acao26() {
+    // Desempilhar da pilha de desvios o endereço da instrução de desvio empilhado na ação #25
     int enderecoJMF = pilhaDesvios.remove(pilhaDesvios.size() - 1);
-    // Atualizar a instrução de desvio com o endereço atual
-    // Exemplo: tabelaInstrucoes.set(enderecoJMF, "JMF " + (ponteiro + 1));
+
+    // Atualizar a instrução de desvio com: endereço  ponteiro + 1
+    tabelaInstrucoes.set(enderecoJMF, new Instrucao(enderecoJMF, "JMF", ponteiro + 1));
+
+    // Desempilhar da pilha de desvios o endereço da instrução empilhado na ação #24
     int enderecoWhile = pilhaDesvios.remove(pilhaDesvios.size() - 1);
+
+    // Gerar instrução: (ponteiro, JMP, “endereço”), onde "endereço" é igual ao valor desempilhado
     gerarInstrucao(ponteiro, "JMP", enderecoWhile);
     ponteiro++;
   }
@@ -428,12 +453,16 @@ public class LanguageParser implements LanguageParserConstants {
     ponteiro++;
   }
 
-  // Ação #31: reconhecimento de operação relacional maior
+  // Ação #31: reconhecimento de operação relacional menor igual
   public void acao31() {
+    gerarInstrucao(ponteiro, "SGE", 0);
+    ponteiro++;
   }
 
-  // Ação #32: reconhecimento de operação relacional maior
+  // Ação #32: reconhecimento de operação relacional maior igual
   public void acao32() {
+    gerarInstrucao(ponteiro, "BGE", 0);
+    ponteiro++;
   }
 
   // Ação #33: reconhecimento de operação aritmética adição
@@ -466,12 +495,16 @@ public class LanguageParser implements LanguageParserConstants {
     ponteiro++;
   }
 
-  // Ação #38: reconhecimento de operação relacional maior
+  // Ação #38: reconhecimento de operação aritmética divisão inteira
   public void acao38() {
+    gerarInstrucao(ponteiro, "DII", 0);
+    ponteiro++;
   }
 
-  // Ação #39: reconhecimento de operação relacional maior
+  // Ação #39: reconhecimento de operação aritmética resto da divisão inteira
   public void acao39() {
+    gerarInstrucao(ponteiro, "DIR", 0);
+    ponteiro++;
   }
 
   // Ação #40: reconhecimento de operação lógica E
@@ -480,8 +513,10 @@ public class LanguageParser implements LanguageParserConstants {
     ponteiro++;
   }
 
-  // Ação #41: reconhecimento de operação relacional maior
+  // Ação #41: reconhecimento de operação aritmética potenciação
   public void acao41() {
+    gerarInstrucao(ponteiro, "POT", 0);
+    ponteiro++;
   }
 
   // Ação #42: reconhecimento de operação lógica NÃO
@@ -520,6 +555,7 @@ public class LanguageParser implements LanguageParserConstants {
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          //verificar
           acao2(token.image);
           break;
         }
@@ -754,6 +790,7 @@ public class LanguageParser implements LanguageParserConstants {
     try {
 
       identificador();
+      //verificar
       acao11(token.image);
       lista_identificadores_prime();
     } finally {
@@ -870,6 +907,7 @@ public class LanguageParser implements LanguageParserConstants {
       expressao();
       jj_consume_token(ATRIBUICAO);
       identificador();
+      //verificar
       acao12(token.image);
     } finally {
       trace_return("atribuicao");
@@ -941,6 +979,7 @@ public class LanguageParser implements LanguageParserConstants {
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          //verificar
           acao15(token.image);
           break;
         }
@@ -957,7 +996,7 @@ public class LanguageParser implements LanguageParserConstants {
         }
         case CONSTANTE_LITERAL: {
           jj_consume_token(CONSTANTE_LITERAL);
-          // validar
+          //verificar
           acao18(token.image);
           break;
         }
@@ -1281,21 +1320,25 @@ public class LanguageParser implements LanguageParserConstants {
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          //verificar
           acao15(token.image);
           break;
         }
         case CONSTANTE_INTEIRA: {
           jj_consume_token(CONSTANTE_INTEIRA);
+          //verificar
           acao16(tipo);
           break;
         }
         case CONSTANTE_REAL: {
           jj_consume_token(CONSTANTE_REAL);
+          //verificar
           acao17(tipo);
           break;
         }
         case CONSTANTE_LITERAL: {
           jj_consume_token(CONSTANTE_LITERAL);
+          //verificar
           acao18(token.image);
           break;
         }

@@ -14,6 +14,10 @@ public class ATabelaInstrucoes {
         instrucoes.add(new Instrucao(numero, codigo, parametro));
     }
 
+    public void set(int numero, Instrucao instrucao) {
+        instrucoes.set(numero, instrucao);
+    }
+
     public Instrucao getInstrucao(int numero) {
         for (Instrucao instrucao : instrucoes) {
             if (instrucao.getNumero() == numero) {
