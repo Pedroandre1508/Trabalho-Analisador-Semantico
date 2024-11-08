@@ -361,7 +361,7 @@ public class Controller {
         ArrayList<AErrorStruct> output = LanguageParser.analisadorSintatico(this.inputTextArea.getText());
         if (output.size() == 0) {
             this.messageTextArea.appendText("\nNão há erro(s) Sintatico\n");
-            this.messageTextArea.appendText("\n--------------------------");
+            this.messageTextArea.appendText("--------------------------");
         } else {
             this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
         }
