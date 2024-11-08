@@ -382,6 +382,7 @@ public class Controller {
             this.messageTextArea.appendText("--------------------------");
         } else {
             this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
+            clearAIntermediateCodeTable();
             output.forEach(error -> {
                 if (error.getError() != null) {
                     this.messageTextArea.appendText("\n" + error.getMsg() + "\n");

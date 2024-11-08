@@ -1,5 +1,4 @@
-
-tenta ler a declaração de variavel ou constante como lista de comandos, acredito que não esta caindo no 
+TESTES GERADOS
 
 make programa
 
@@ -8,35 +7,40 @@ var int: x, y. real: z. end;
 put(x, y, z).
 end.
 
-------------------------
-Nesta entrada, o programa compila com sucesso, porque ele faz toda a analise da declaração de constante e parte para a lista de comandos, que identifica todo o resto corretamente e finaliza o programa certo.
+
+---------------
+make programa
+
+const int: a = 10. real: b = 20. end;
+var int: x, y. real: z. end;
+
+while a > 5 do
+    if b < 15 then
+        put(x).
+    else
+        put(y).
+    end.
+    .a -> x.
+end.
+.
+end.
+
+------------------
 
 make programa
 
 const int: a = 10. real: b = 20. end;
-put(x, y, z).
+var int: x, y. real: z. end;
+
+if a > 5 then
+    if b < 15 then
+        put(x).
+    else
+        put(y).
+    end.
+.
+else
+    put(z).
 end.
-
-
-
----------------
-
-
-
-agora preciso fazer com que as funções de ações trabalhem juntas com os objetos das duas tabelas, tabela de instuções e tabela de simbolos.
-
-Só para repassar a logica:
-
-Quando eu colocar a chamada de função de cada ação correspondente na gramatica,  o sistema irá realizar o que é pedido, caso solicite a gravação de uma instrução:
-
-EX:  gerarInstrucao(ponteiro, "REA", categoria);
-
-O sistema, deve armazenar esta geração de intrução na tabela de instruções.
-
-Quando tiver o caso de adicionar  na tabela de simbolos:
-
-EX:  tabelaSimbolos.add(identificador + ", 0, -");
-
-O sistema deve armazenar estes dados de simbolo, conforme instruido nas ações.
-
-Ao analisar o programa, e estar semanticamente correto de acordo com a minha gramatica, o sistema deve exibir todas as instruções gravadas na tabela de simbolos, na minha tabela criada na tela do compilador que esta atualmente salvando exemplos  com a classe de intermediateCodeList que era so um teste, mas agora, preciso que seja armazenado na tabela, todas as instruções armazenadas.
+.
+end.
