@@ -1,28 +1,53 @@
 package classes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ATabelaInstrucoes {
-    private String instrucao;
-    private String operando;
+    private List<Instrucao> instrucoes;
 
-    public ATabelaInstrucoes(String instrucao, String operando) {
-        this.instrucao = instrucao;
-        this.operando = operando;
+    public ATabelaInstrucoes() {
+        this.instrucoes = new ArrayList<>();
     }
 
-    public String getInstrucao() {
-        return instrucao;
+    public void adicionarInstrucao(int numero, String codigo, Object parametro) {
+        instrucoes.add(new Instrucao(numero, codigo, parametro));
     }
 
-    public void setInstrucao(String instrucao) {
-        this.instrucao = instrucao;
+    public Instrucao getInstrucao(int numero) {
+        for (Instrucao instrucao : instrucoes) {
+            if (instrucao.getNumero() == numero) {
+                return instrucao;
+            }
+        }
+        return null;
     }
 
-    public String getOperando() {
-        return operando;
+    public List<Instrucao> getInstrucoes() {
+        return instrucoes;
+    }
+}
+
+class Instrucao {
+    private int numero;
+    private String codigo;
+    private Object parametro;
+
+    public Instrucao(int numero, String codigo, Object parametro) {
+        this.numero = numero;
+        this.codigo = codigo;
+        this.parametro = parametro;
     }
 
-    public void setOperando(String operando) {
-        this.operando = operando;
+    public int getNumero() {
+        return numero;
     }
 
+    public String getCodigo() {
+        return codigo;
+    }
+
+    public Object getParametro() {
+        return parametro;
+    }
 }

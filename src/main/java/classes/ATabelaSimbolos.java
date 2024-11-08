@@ -1,27 +1,57 @@
 package classes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ATabelaSimbolos {
-    private String simbolo;
-    private String endereco;
+    private List<Simbolo> simbolos;
 
-    public ATabelaSimbolos(String simbolo, String endereco) {
-        this.simbolo = simbolo;
-        this.endereco = endereco;
+    public ATabelaSimbolos() {
+        this.simbolos = new ArrayList<>();
     }
 
-    public String getSimbolo() {
-        return simbolo;
+    public void adicionarSimbolo(String nome, int categoria, int atributo) {
+        simbolos.add(new Simbolo(nome, categoria, atributo));
     }
 
-    public void setSimbolo(String simbolo) {
-        this.simbolo = simbolo;
+    public Simbolo getSimbolo(String nome) {
+        for (Simbolo simbolo : simbolos) {
+            if (simbolo.getNome().equals(nome)) {
+                return simbolo;
+            }
+        }
+        return null;
     }
 
-    public String getEndereco() {
-        return endereco;
+    public List<Simbolo> getSimbolos() {
+        return simbolos;
     }
 
-    public void setEndereco(String endereco) {
-        this.endereco = endereco;
+    public boolean contains(String nome) {
+        return getSimbolo(nome) != null;
+    }
+}
+
+class Simbolo {
+    private String nome;
+    private int categoria;
+    private int atributo;
+
+    public Simbolo(String nome, int categoria, int atributo) {
+        this.nome = nome;
+        this.categoria = categoria;
+        this.atributo = atributo;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public int getCategoria() {
+        return categoria;
+    }
+
+    public int getAtributo() {
+        return atributo;
     }
 }

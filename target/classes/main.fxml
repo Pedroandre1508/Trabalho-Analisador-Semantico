@@ -33,7 +33,7 @@
                     <MenuItem disable="true" text="Executar"/>
                 </Menu>
                 <Menu text="Versão">
-                    <MenuItem text="0.2 || Autores: Katya Balvedi e Pedro André"/>
+                    <MenuItem text="0.3 || Autore: Pedro André"/>
                 </Menu>
             </MenuBar>
         </HBox>
