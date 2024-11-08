@@ -230,6 +230,7 @@ public class Controller {
     }
 
     public void setStage(Stage primaryStage) {
+        setLineColLabel(1, 1);;
         this.stage = primaryStage;
         inputTextArea.setParagraphGraphicFactory(LineNumberFactory.get(inputTextArea));
         registerWindowClose();

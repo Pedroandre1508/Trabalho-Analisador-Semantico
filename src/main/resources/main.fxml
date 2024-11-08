@@ -30,7 +30,7 @@
                 </Menu>
                 <Menu text="Compilação">
                     <MenuItem text="Compilar" onAction="#compileProgram"/>
-                    <MenuItem disable="true" text="Executar"/>
+                    <MenuItem text="Executar" onAction="#compileProgram"/>
                 </Menu>
                 <Menu text="Versão">
                     <MenuItem text="0.2 || Autores: Katya Balvedi e Pedro André"/>
@@ -90,7 +90,7 @@
                         </ImageView>
                     </graphic>
                 </Button>
-                <Button fx:id="runBtn" disable="true">
+                <Button fx:id="runBtn" onAction="#compileProgram">
                     <graphic>
                         <ImageView>
                             <Image url="@icones/executar.png"/>
@@ -118,9 +118,6 @@
             <Label>Saída</Label>
             <HBox>
                 <TextArea fx:id="messageTextArea" editable="false" HBox.hgrow="ALWAYS"/>
-            </HBox>
-            <HBox>
-                <Label fx:id="statusBar">Status ...</Label>
             </HBox>
             <HBox>
                 <Label fx:id="lineColLabel">Linha/Coluna</Label>
