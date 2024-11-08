@@ -13,11 +13,12 @@ public class LanguageParser implements LanguageParserConstants {
 
   private ATabelaSimbolos tabelaSimbolos = new ATabelaSimbolos();
   private ATabelaInstrucoes tabelaInstrucoes = new ATabelaInstrucoes();
-
   private int VT = 0, VP = 0, ponteiro = 1;
   private String contexto;
   private int tipo;
   private ArrayList<Integer> pilhaDesvios = new ArrayList<>();
+  private List<SemanticException> semanticErrors = new ArrayList<>();
+
 
   public static void main(String[] args) throws TokenMgrError, ParseException {
     LanguageParser parser;
@@ -72,7 +73,7 @@ public class LanguageParser implements LanguageParserConstants {
     contParseError++;
   }
 
-  public static ArrayList<AErrorStruct> analisadorSintatico(String input) {
+  public static ArrayList<AErrorStruct> analisadorSintatico(String input) throws SemanticException {
     ArrayList<AErrorStruct> output = new ArrayList<>();
     LanguageParser parser = create(input);
     boolean hasErrors = false;
@@ -108,24 +109,41 @@ public class LanguageParser implements LanguageParserConstants {
     return expected.toString();
   }
 
-  public static List<AIntermediateCode> analisadorSemantico(String input) {
+  public static List<AIntermediateCode> analisadorSemantico(String input, List<String> semanticErrors) throws ParseException, SemanticException {
     List<AIntermediateCode> intermediateCodeList = new ArrayList<>();
     LanguageParser parser = create(input);
 
-    // Chamar uma das funções de ação para gerar instruções
-    parser.acao1(); // Exemplo: Chamar a ação 1 para gerar uma instrução
+    parser.programa();
 
-    // Adicionar as instruções geradas na lista de AIntermediateCode
-    parser.tabelaInstrucoes.getInstrucoes().forEach(instrucao -> {
-        intermediateCodeList.add(new AIntermediateCode(
-            String.valueOf(instrucao.getNumero()),
-            instrucao.getCodigo(),
-            String.valueOf(instrucao.getParametro())
-        ));
-    });
+    // Verifique se há erros semânticos
+    if (!parser.getSemanticErrors().isEmpty()) {
+        for (SemanticException e : parser.getSemanticErrors()) {
+            String errorMessage = "\n" + e.getMessage();
+            semanticErrors.add(errorMessage);
+        }
+    } else {
+        // Adicionar as instruções geradas na lista de AIntermediateCode
+        parser.tabelaInstrucoes.getInstrucoes().forEach(instrucao -> {
+            intermediateCodeList.add(new AIntermediateCode(
+                String.valueOf(instrucao.getNumero()),
+                instrucao.getCodigo(),
+                String.valueOf(instrucao.getParametro())
+            ));
+        });
+    }
 
     return intermediateCodeList;
 }
+
+  public class SemanticException extends Exception {
+    public SemanticException(String message) {
+      super(message);
+    }
+  }
+
+  public List<SemanticException> getSemanticErrors() {
+    return semanticErrors;
+  }
 
   public static List<Token> getTokens(String stream) {
     InputStream target = new ByteArrayInputStream(stream.getBytes());
@@ -237,21 +255,23 @@ public class LanguageParser implements LanguageParserConstants {
   }
 
   // Ação #10: reconhecimento da palavra reservada bool
-  public void acao10() {
+  public void acao10() throws SemanticException {
     if (contexto.equals("variavel")) {
       tipo = 4;
     } else {
-      System.err.println("Erro: tipo inválido para constante");
+      semanticErrors.add(new SemanticException("Erro Semantico: tipo inválido para constante"));
+
     }
   }
 
   // Ação #11: reconhecimento de identificador
-  public void acao11(String identificador) {
+  public void acao11(String identificador) throws SemanticException {
     switch (contexto) {
       case "constante":
       case "variavel":
         if (tabelaSimbolos.contains(identificador)) {
-          System.err.println("Erro: identificador já declarado");
+          semanticErrors.add(new SemanticException("Erro Semantico: identificador já declarado"));
+
         } else {
           VT++;
           VP++;
@@ -266,20 +286,20 @@ public class LanguageParser implements LanguageParserConstants {
           gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
           ponteiro++;
         } else {
-          System.err.println("Erro: identificador não declarado");
+          semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
         }
         break;
     }
   }
 
   // Ação #12: reconhecimento de identificador em comando de atribuição
-  public void acao12(String identificador) {
+  public void acao12(String identificador) throws SemanticException {
     if (tabelaSimbolos.contains(identificador)) {
       Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
       gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
       ponteiro++;
     } else {
-      System.err.println("Erro: identificador não declarado");
+    semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
     }
   }
 
@@ -295,13 +315,13 @@ public class LanguageParser implements LanguageParserConstants {
   }
 
   // Ação #15: reconhecimento de identificador em comando de saída ou em expressão
-  public void acao15(String identificador) {
+  public void acao15(String identificador) throws SemanticException {
     if (tabelaSimbolos.contains(identificador)) {
       Simbolo simbolo = tabelaSimbolos.getSimbolo(identificador);
       gerarInstrucao(ponteiro, "LDV", simbolo.getAtributo());
       ponteiro++;
     } else {
-      System.err.println("Erro: identificador não declarado");
+      semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
     }
   }
 
@@ -477,7 +497,7 @@ public class LanguageParser implements LanguageParserConstants {
 
   // Analisador Sintatico
   // Produções
-  final public void programa() throws ParseException {
+  final public void programa() throws ParseException, SemanticException {
     trace_call("programa");
     try {
 
@@ -487,6 +507,7 @@ public class LanguageParser implements LanguageParserConstants {
       lista_comandos();
       jj_consume_token(END);
       jj_consume_token(PONTO);
+      acao1();
     } finally {
       trace_return("programa");
     }
@@ -499,6 +520,7 @@ public class LanguageParser implements LanguageParserConstants {
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          acao2(token.image);
           break;
         }
         default:
@@ -510,7 +532,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void declaracao_constantes_variaveis() throws ParseException {
+  final public void declaracao_constantes_variaveis() throws ParseException, SemanticException {
     trace_call("declaracao_constantes_variaveis");
     try {
 
@@ -529,7 +551,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void constantes_e_variaveis() throws ParseException {
+  final public void constantes_e_variaveis() throws ParseException, SemanticException {
     trace_call("constantes_e_variaveis");
     try {
 
@@ -554,7 +576,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void constantes_e_variaveis_prime() throws ParseException {
+  final public void constantes_e_variaveis_prime() throws ParseException, SemanticException {
     trace_call("constantes_e_variaveis_prime");
     try {
 
@@ -588,11 +610,12 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void declaracao_constantes() throws ParseException {
+  final public void declaracao_constantes() throws ParseException, SemanticException {
     trace_call("declaracao_constantes");
     try {
 
       jj_consume_token(CONST);
+      acao3();
       constantes();
       jj_consume_token(END);
       jj_consume_token(PONTOVIRGULA);
@@ -601,15 +624,18 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void constantes() throws ParseException {
+  final public void constantes() throws ParseException, SemanticException {
     trace_call("constantes");
     try {
 
       tipo();
       jj_consume_token(DOISPONTOS);
       lista_identificadores();
+      acao4();
       jj_consume_token(IGUAL);
       valor();
+      // verificar
+      acao5(tipo);
       jj_consume_token(PONTO);
       constantes_prime();
     } finally {
@@ -617,7 +643,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void constantes_prime() throws ParseException {
+  final public void constantes_prime() throws ParseException, SemanticException {
     trace_call("constantes_prime");
     try {
 
@@ -638,11 +664,12 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void declaracao_variaveis() throws ParseException {
+  final public void declaracao_variaveis() throws ParseException, SemanticException {
     trace_call("declaracao_variaveis");
     try {
 
       jj_consume_token(VAR);
+      acao6();
       variaveis();
       jj_consume_token(END);
       jj_consume_token(PONTOVIRGULA);
@@ -651,13 +678,14 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void variaveis() throws ParseException {
+  final public void variaveis() throws ParseException, SemanticException {
     trace_call("variaveis");
     try {
 
       tipo();
       jj_consume_token(DOISPONTOS);
       lista_identificadores();
+      acao4();
       jj_consume_token(PONTO);
       variaveis_prime();
     } finally {
@@ -665,7 +693,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void variaveis_prime() throws ParseException {
+  final public void variaveis_prime() throws ParseException, SemanticException {
     trace_call("variaveis_prime");
     try {
 
@@ -686,25 +714,29 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void tipo() throws ParseException {
+  final public void tipo() throws ParseException, SemanticException {
     trace_call("tipo");
     try {
 
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case INT: {
           jj_consume_token(INT);
+          acao7();
           break;
         }
         case REAL: {
           jj_consume_token(REAL);
+          acao8();
           break;
         }
         case CHAR: {
           jj_consume_token(CHAR);
+          acao9();
           break;
         }
         case BOOL: {
           jj_consume_token(BOOL);
+          acao10();
           break;
         }
         default:
@@ -717,18 +749,19 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void lista_identificadores() throws ParseException {
+  final public void lista_identificadores() throws ParseException, SemanticException {
     trace_call("lista_identificadores");
     try {
 
       identificador();
+      acao11(token.image);
       lista_identificadores_prime();
     } finally {
       trace_return("lista_identificadores");
     }
   }
 
-  final public void lista_identificadores_prime() throws ParseException {
+  final public void lista_identificadores_prime() throws ParseException, SemanticException {
     trace_call("lista_identificadores_prime");
     try {
 
@@ -747,7 +780,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void lista_comandos() throws ParseException {
+  final public void lista_comandos() throws ParseException, SemanticException {
     trace_call("lista_comandos");
     try {
 
@@ -759,7 +792,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void lista_comandos_prime() throws ParseException {
+  final public void lista_comandos_prime() throws ParseException, SemanticException {
     trace_call("lista_comandos_prime");
     try {
 
@@ -788,7 +821,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void comando() throws ParseException {
+  final public void comando() throws ParseException, SemanticException {
     trace_call("comando");
     try {
 
@@ -830,23 +863,25 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void atribuicao() throws ParseException {
+  final public void atribuicao() throws ParseException, SemanticException {
     trace_call("atribuicao");
     try {
 
       expressao();
       jj_consume_token(ATRIBUICAO);
       identificador();
+      acao12(token.image);
     } finally {
       trace_return("atribuicao");
     }
   }
 
-  final public void entrada() throws ParseException {
+  final public void entrada() throws ParseException, SemanticException {
     trace_call("entrada");
     try {
 
       jj_consume_token(GET);
+      acao13();
       jj_consume_token(ABRE_PARENTESES);
       lista_identificadores();
       jj_consume_token(FECHA_PARENTESES);
@@ -855,7 +890,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void saida() throws ParseException {
+  final public void saida() throws ParseException, SemanticException {
     trace_call("saida");
     try {
 
@@ -868,18 +903,19 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void lista_identificadores_e_ou_constantes() throws ParseException {
+  final public void lista_identificadores_e_ou_constantes() throws ParseException, SemanticException {
     trace_call("lista_identificadores_e_ou_constantes");
     try {
 
       item();
+      acao14();
       lista_identificadores_e_ou_constantes_prime();
     } finally {
       trace_return("lista_identificadores_e_ou_constantes");
     }
   }
 
-  final public void lista_identificadores_e_ou_constantes_prime() throws ParseException {
+  final public void lista_identificadores_e_ou_constantes_prime() throws ParseException, SemanticException {
     trace_call("lista_identificadores_e_ou_constantes_prime");
     try {
 
@@ -898,33 +934,41 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void item() throws ParseException {
+  final public void item() throws ParseException, SemanticException {
     trace_call("item");
     try {
 
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          acao15(token.image);
           break;
         }
         case CONSTANTE_INTEIRA: {
           jj_consume_token(CONSTANTE_INTEIRA);
+          // verificar
+          acao16(tipo);
           break;
         }
         case CONSTANTE_REAL: {
           jj_consume_token(CONSTANTE_REAL);
+          acao17(tipo);
           break;
         }
         case CONSTANTE_LITERAL: {
           jj_consume_token(CONSTANTE_LITERAL);
+          // validar
+          acao18(token.image);
           break;
         }
         case TRUE: {
           jj_consume_token(TRUE);
+          acao19();
           break;
         }
         case FALSE: {
           jj_consume_token(FALSE);
+          acao20();
           break;
         }
         default:
@@ -937,29 +981,32 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void selecao() throws ParseException {
+  final public void selecao() throws ParseException, SemanticException {
     trace_call("selecao");
     try {
 
       jj_consume_token(IF);
       expressao();
+      acao21();
       jj_consume_token(THEN);
       lista_comandos();
       senao();
       jj_consume_token(END);
       jj_consume_token(PONTO);
+      acao22();
     } finally {
       trace_return("selecao");
     }
   }
 
-  final public void senao() throws ParseException {
+  final public void senao() throws ParseException, SemanticException {
     trace_call("senao");
     try {
 
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case ELSE: {
           jj_consume_token(ELSE);
+          acao23();
           lista_comandos();
           break;
         }
@@ -972,22 +1019,25 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void repeticao() throws ParseException {
+  final public void repeticao() throws ParseException, SemanticException {
     trace_call("repeticao");
     try {
 
       jj_consume_token(WHILE);
+      acao24();
       expressao();
+      acao25();
       jj_consume_token(DO);
       lista_comandos();
       jj_consume_token(END);
       jj_consume_token(PONTO);
+      acao26();
     } finally {
       trace_return("repeticao");
     }
   }
 
-  final public void expressao() throws ParseException {
+  final public void expressao() throws ParseException, SemanticException {
     trace_call("expressao");
     try {
 
@@ -998,7 +1048,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void expressao_prime() throws ParseException {
+  final public void expressao_prime() throws ParseException, SemanticException {
     trace_call("expressao_prime");
     try {
 
@@ -1013,31 +1063,37 @@ public class LanguageParser implements LanguageParserConstants {
             case IGUAL: {
               jj_consume_token(IGUAL);
               expressao_aritmetica_ou_logica();
+              acao27();
               break;
             }
             case DIFERENTE: {
               jj_consume_token(DIFERENTE);
               expressao_aritmetica_ou_logica();
+              acao28();
               break;
             }
             case MENOR: {
               jj_consume_token(MENOR);
               expressao_aritmetica_ou_logica();
+              acao29();
               break;
             }
             case MAIOR: {
               jj_consume_token(MAIOR);
               expressao_aritmetica_ou_logica();
+              acao29();
               break;
             }
             case MENOR_IGUAL: {
               jj_consume_token(MENOR_IGUAL);
               expressao_aritmetica_ou_logica();
+              acao30();
               break;
             }
             case MAIOR_IGUAL: {
               jj_consume_token(MAIOR_IGUAL);
               expressao_aritmetica_ou_logica();
+              acao31();
               break;
             }
             default:
@@ -1056,7 +1112,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void expressao_aritmetica_ou_logica() throws ParseException {
+  final public void expressao_aritmetica_ou_logica() throws ParseException, SemanticException {
     trace_call("expressao_aritmetica_ou_logica");
     try {
 
@@ -1067,7 +1123,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void menor_prioridade() throws ParseException {
+  final public void menor_prioridade() throws ParseException, SemanticException {
     trace_call("menor_prioridade");
     try {
 
@@ -1079,18 +1135,21 @@ public class LanguageParser implements LanguageParserConstants {
             case ADICAO: {
               jj_consume_token(ADICAO);
               termo2();
+              acao33();
               menor_prioridade();
               break;
             }
             case SUBTRACAO: {
               jj_consume_token(SUBTRACAO);
               termo2();
+              acao34();
               menor_prioridade();
               break;
             }
             case OU: {
               jj_consume_token(OU);
               termo2();
+              acao35();
               menor_prioridade();
               break;
             }
@@ -1110,7 +1169,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void termo2() throws ParseException {
+  final public void termo2() throws ParseException, SemanticException {
     trace_call("termo2");
     try {
 
@@ -1121,7 +1180,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void media_prioridade() throws ParseException {
+  final public void media_prioridade() throws ParseException, SemanticException {
     trace_call("media_prioridade");
     try {
 
@@ -1135,30 +1194,35 @@ public class LanguageParser implements LanguageParserConstants {
             case MULTIPLICACAO: {
               jj_consume_token(MULTIPLICACAO);
               termo1();
+              acao36();
               media_prioridade();
               break;
             }
             case DIVISAO: {
               jj_consume_token(DIVISAO);
               termo1();
+              acao37();
               media_prioridade();
               break;
             }
             case DIVISAO_INTEIRA: {
               jj_consume_token(DIVISAO_INTEIRA);
               termo1();
+              acao38();
               media_prioridade();
               break;
             }
             case RESTO: {
               jj_consume_token(RESTO);
               termo1();
+              acao39();
               media_prioridade();
               break;
             }
             case E: {
               jj_consume_token(E);
               termo1();
+              acao40();
               media_prioridade();
               break;
             }
@@ -1178,7 +1242,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void termo1() throws ParseException {
+  final public void termo1() throws ParseException, SemanticException {
     trace_call("termo1");
     try {
 
@@ -1189,7 +1253,7 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void maior_prioridade() throws ParseException {
+  final public void maior_prioridade() throws ParseException, SemanticException {
     trace_call("maior_prioridade");
     try {
 
@@ -1197,6 +1261,7 @@ public class LanguageParser implements LanguageParserConstants {
         case POTENCIA: {
           jj_consume_token(POTENCIA);
           elemento();
+          acao41();
           maior_prioridade();
           break;
         }
@@ -1209,33 +1274,39 @@ public class LanguageParser implements LanguageParserConstants {
     }
   }
 
-  final public void elemento() throws ParseException {
+  final public void elemento() throws ParseException, SemanticException {
     trace_call("elemento");
     try {
 
       switch ((jj_ntk == -1) ? jj_ntk_f() : jj_ntk) {
         case IDENTIFICADOR: {
           identificador();
+          acao15(token.image);
           break;
         }
         case CONSTANTE_INTEIRA: {
           jj_consume_token(CONSTANTE_INTEIRA);
+          acao16(tipo);
           break;
         }
         case CONSTANTE_REAL: {
           jj_consume_token(CONSTANTE_REAL);
+          acao17(tipo);
           break;
         }
         case CONSTANTE_LITERAL: {
           jj_consume_token(CONSTANTE_LITERAL);
+          acao18(token.image);
           break;
         }
         case TRUE: {
           jj_consume_token(TRUE);
+          acao19();
           break;
         }
         case FALSE: {
           jj_consume_token(FALSE);
+          acao20();
           break;
         }
         case ABRE_PARENTESES: {
@@ -1249,6 +1320,7 @@ public class LanguageParser implements LanguageParserConstants {
           jj_consume_token(ABRE_PARENTESES);
           expressao();
           jj_consume_token(FECHA_PARENTESES);
+          acao42();
           break;
         }
         default:

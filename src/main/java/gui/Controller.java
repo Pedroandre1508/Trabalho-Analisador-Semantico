@@ -3,7 +3,9 @@ package gui;
 import classes.AErrorStruct;
 import classes.AIntermediateCode;
 import classes.LanguageParser;
+import classes.LanguageParser.SemanticException;
 import classes.LanguageParserConstants;
+import classes.ParseException;
 import classes.Token;
 import util.AlertFactory;
 import util.Operation;
@@ -286,11 +288,11 @@ public class Controller {
         }
     }
 
-    public void compileProgram(ActionEvent actionEvent) {
+    public void compileProgram(ActionEvent actionEvent) throws SemanticException, ParseException {
         if (this.inputTextArea.getText().length() == 0) {
             return;
         }
-    
+
         // Realiza a análise léxica
         analisadorLexico();
 
@@ -309,6 +311,17 @@ public class Controller {
 
         // Realiza a análise semântica
         analisarSemantica(this.inputTextArea.getText());
+
+        // Verifica se há erros semânticos
+        if (hasSemanticErrors()) {
+            return;
+        }
+        
+    }
+
+    private boolean hasSemanticErrors() {
+        String messageContent = this.messageTextArea.getText();
+        return messageContent.contains("Erro Semantico encontrado");
     }
 
     private boolean hasSyntaxErrors() {
@@ -318,8 +331,9 @@ public class Controller {
 
     private boolean hasLexicalErrors() {
         String messageContent = this.messageTextArea.getText();
-        return messageContent.contains("Erro(s) lexicos encontrados ");
+        return messageContent.contains("Erro(s) lexicos encontrados.");
     }
+
 
     private void analisadorLexico() {
         this.messageTextArea.clear();
@@ -335,44 +349,45 @@ public class Controller {
             }
         }
         if (counter == 0) {
-            this.messageTextArea.appendText("\nNão há erro(s) lexicos ");
+            this.messageTextArea.appendText("\nNão há erro(s) lexicos.");
             this.messageTextArea.appendText("\n--------------------------");
-        }
-        else{
+        } else {
             System.err.println("Erro léxico: ");
-            this.messageTextArea.appendText("\nErro(s) lexicos encontrados ");
+            this.messageTextArea.appendText("\nErro(s) lexicos encontrados.");
         }
     }
 
-    private void analisadorSintatico() {
+    private void analisadorSintatico() throws SemanticException {
         ArrayList<AErrorStruct> output = LanguageParser.analisadorSintatico(this.inputTextArea.getText());
         if (output.size() == 0) {
             this.messageTextArea.appendText("\nNão há erro(s) Sintatico\n");
+            this.messageTextArea.appendText("\n--------------------------");
         } else {
             this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
         }
     }
 
-    private void analisarSemantica(String codigo) {
-        List<AIntermediateCode> AIntermediateCodeList = LanguageParser.analisadorSemantico(codigo);
-        updateAIntermediateCodeTable(AIntermediateCodeList);
-
-        //Anotações de como pode ser a mensagem em tela
-        // if (AIntermediateCodeList.size() == 0) {
-        //     this.messageTextArea.appendText("\nNão há erro(s) Semantico\n");
-            
-        // } else {
-        //     this.messageTextArea.appendText("\nErro(s) Semantico encontrados.\n");
-        // }
-        
+    private void analisarSemantica(String codigo) throws ParseException, SemanticException {
+        List<String> semanticErrors = new ArrayList<>();
+        List<AIntermediateCode> AIntermediateCodeList = LanguageParser.analisadorSemantico(codigo, semanticErrors);
+        clearAIntermediateCodeTable();
+    
+        if (semanticErrors.isEmpty()) {
+            this.messageTextArea.appendText("\nNão há erro(s) Semantico(s)\n");
+            updateAIntermediateCodeTable(AIntermediateCodeList);
+        } else {
+            for (String error : semanticErrors) {
+                this.messageTextArea.appendText("\n" + error + "\n");
+            }
+        }
     }
 
-    //atualiza a tabela de códigos intermediários
+    // atualiza a tabela de códigos intermediários
     private void updateAIntermediateCodeTable(List<AIntermediateCode> AIntermediateCodeList) {
         AIntermediateCodeTable.getItems().setAll(AIntermediateCodeList);
     }
 
-    //limpa a tabela de códigos intermediários
+    // limpa a tabela de códigos intermediários
     public void clearAIntermediateCodeTable() {
         AIntermediateCodeTable.getItems().clear();
     }
