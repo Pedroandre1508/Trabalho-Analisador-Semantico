@@ -348,6 +348,23 @@ public class Controller {
                     || token.kind == LanguageParserConstants.IDENTIFICADOR_INVALIDO) {
                 counter++;
             }
+            switch (token.kind) {
+                case 54:
+                    this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Simbolo Invalido, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
+                    break;
+                case 55:
+                    this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Inteira Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
+                    break;
+                case 56:
+                    this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Real Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
+                    break;
+                case 57:
+                    this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Constante Literal Invalida, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
+                    break;
+                case 58:
+                    this.messageTextArea.appendText("\n|Erro: " + token.kind + " - Identificador Invalido, linha: " + token.beginLine + "- coluna: " + token.endColumn + "|");
+                    break;
+            }
         }
         if (counter == 0) {
             this.messageTextArea.appendText("\nNão há erro(s) lexicos.");
@@ -365,6 +382,13 @@ public class Controller {
             this.messageTextArea.appendText("--------------------------");
         } else {
             this.messageTextArea.appendText("\nErro(s) sintaticos encontrados.\n");
+            output.forEach(error -> {
+                if (error.getError() != null) {
+                    this.messageTextArea.appendText("\n" + error.getMsg() + "\n");
+                } else {
+                    this.messageTextArea.appendText("\n" + error.getMsg() + "\n");
+                }
+            });
         }
     }
 

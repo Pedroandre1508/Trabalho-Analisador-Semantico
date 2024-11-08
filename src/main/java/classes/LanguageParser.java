@@ -78,34 +78,47 @@ public class LanguageParser implements LanguageParserConstants {
     boolean hasErrors = false;
 
     try {
-      parser.programa();
+        parser.programa();
     } catch (ParseException e) {
-      hasErrors = true;
-      AErrorStruct errorStruct = new AErrorStruct("Erro parsing programa.\n", e);
-      errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
-      output.add(errorStruct);
-      System.err.println("Erro sintático: " + e.getMessage());
-      System.err.println("Linha: " + e.currentToken.next.beginLine + ", Coluna: " + e.currentToken.next.beginColumn);
-      System.err.println("Esperado: " + getExpectedTokens(e.expectedTokenSequences, e.tokenImage));
+        hasErrors = true;
+        AErrorStruct errorStruct = new AErrorStruct("\n"+ e.getMessage(), e);
+        errorStruct.setExpected(e.expectedTokenSequences, e.tokenImage);
+        output.add(errorStruct);
+        System.err.println("Erro sintático: " + e.getMessage());
+        System.err.println("Linha: " + e.currentToken.next.beginLine + ", Coluna: " + e.currentToken.next.beginColumn);
+        System.err.println("Esperado: " + getExpectedTokens(e.expectedTokenSequences, e.tokenImage));
     }
 
     if (hasErrors) {
-      System.err.println("Erro(s) sint\u00e1ticos encontrados.");
+        System.err.println("Erro(s) sint\u00e1ticos encontrados.");
     }
 
     return output;
-  }
+}
 
   // Método auxiliar para obter os tokens esperados como uma string
   private static String getExpectedTokens(int[][] expectedTokenSequences, String[] tokenImage) {
     StringBuilder expected = new StringBuilder();
     for (int[] sequence : expectedTokenSequences) {
-      for (int token : sequence) {
-        expected.append(tokenImage[token]).append(" ");
-      }
-      expected.append("\n");
+        for (int token : sequence) {
+            expected.append(tokenImage[token]).append(" ");
+        }
+        expected.append("\n");
     }
     return expected.toString();
+  }
+
+  public void exibirErrosSintaticos(String input) {
+    try {
+        ArrayList<AErrorStruct> errosSintaticos = analisadorSintatico(input);
+        if (!errosSintaticos.isEmpty()) {
+            for (AErrorStruct erro : errosSintaticos) {
+                System.out.println(erro.toString());
+            }
+        }
+    } catch (SemanticException e) {
+        e.printStackTrace();
+    }
   }
 
   public static List<AIntermediateCode> analisadorSemantico(String input, List<String> semanticErrors) throws ParseException, SemanticException {
