@@ -134,11 +134,29 @@ public class LanguageParser implements LanguageParserConstants {
     return intermediateCodeList;
 }
 
-  public class SemanticException extends Exception {
-    public SemanticException(String message) {
+public class SemanticException extends Exception {
+  private int line;
+  private int column;
+
+  public SemanticException(String message, int line, int column) {
       super(message);
-    }
+      this.line = line;
+      this.column = column;
   }
+
+  public int getLine() {
+      return line;
+  }
+
+  public int getColumn() {
+      return column;
+  }
+
+  @Override
+  public String getMessage() {
+      return super.getMessage() + " (Linha: " + line + ", Coluna: " + column + ")";
+  }
+}
 
   public List<SemanticException> getSemanticErrors() {
     return semanticErrors;
@@ -258,7 +276,7 @@ public class LanguageParser implements LanguageParserConstants {
     if (contexto.equals("variavel")) {
       tipo = 4;
     } else {
-      semanticErrors.add(new SemanticException("Erro Semantico: tipo inválido para constante"));
+      semanticErrors.add(new SemanticException("Erro Semantico: tipo inválido para constante", token.beginLine, token.beginColumn));
 
     }
   }
@@ -269,8 +287,7 @@ public class LanguageParser implements LanguageParserConstants {
       case "constante":
       case "variavel":
         if (tabelaSimbolos.contains(identificador)) {
-          semanticErrors.add(new SemanticException("Erro Semantico: identificador já declarado"));
-
+          semanticErrors.add(new SemanticException("Erro Semantico: identificador já declarado", token.beginLine, token.beginColumn));
         } else {
           VT++;
           VP++;
@@ -285,7 +302,7 @@ public class LanguageParser implements LanguageParserConstants {
           gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
           ponteiro++;
         } else {
-          semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
+          semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado", token.beginLine, token.beginColumn));
         }
         break;
     }
@@ -301,10 +318,10 @@ public class LanguageParser implements LanguageParserConstants {
             gerarInstrucao(ponteiro, "STR", simbolo.getAtributo());
             ponteiro++;
         } else {
-            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa ou de constante"));
+            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa ou de constante", token.beginLine, token.beginColumn));
         }
     } else {
-        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
+        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado", token.beginLine, token.beginColumn));
     }
   }
 
@@ -329,10 +346,10 @@ public class LanguageParser implements LanguageParserConstants {
             gerarInstrucao(ponteiro, "LDV", simbolo.getAtributo());
             ponteiro++;
         } else {
-            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa"));
+            semanticErrors.add(new SemanticException("Erro Semantico: identificador de programa", token.beginLine, token.beginColumn));
         }
     } else {
-        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado"));
+        semanticErrors.add(new SemanticException("Erro Semantico: identificador não declarado", token.beginLine, token.beginColumn));
     }
   }
 
