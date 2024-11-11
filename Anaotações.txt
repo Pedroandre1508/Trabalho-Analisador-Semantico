@@ -1,3 +1,10 @@
+correções a serem realizadas
+
+
+ldv, ldi estavam incorretos e o jump estava exibindo 2x seguidas, um com o ? e o outro com o lugar para onde deveria pular, mas o correto seria so exibir um com o valor de onde ele deve pular e não adeve exibir o ?.
+o Jump com ? é apenas temporario, até ele encontrar para onde deve pular, ai quando é encontrado que dai dev e ser exibido na tabela.
+
+
 TESTES GERADOS
 
 make programa
